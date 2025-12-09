@@ -1,0 +1,1 @@
+I am not a coder.  I'm just an artist.  I believe this module is a very small fix that does very little, and I believe I handled any potential memory leaks.  If you see any problems you probably know more than I do.  I just cobbled this together so I could get the basic functionality I needed.
