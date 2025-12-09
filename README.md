@@ -1,3 +1,4 @@
+![alt text](https://i.imgur.com/IreNucx.png "Don't pay more, pay Kreegland.")
 # Kreegland Industrial Repurposing
 A Kerbal Space Program Mod
 # About Us
