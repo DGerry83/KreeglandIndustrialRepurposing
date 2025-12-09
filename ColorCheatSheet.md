@@ -295,6 +295,7 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD WashedOutGreen](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=bcf5a6) `WashedOutGreen`
 * ![XKCD WeirdGreen](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=3ae57f) `WeirdGreen`
 * ![XKCD Wintergreen](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=20f986) `Wintergreen`
+* ![XKCD Chartreuse](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c1f80a) `Chartreuse`
 
 ### Red
 * ![XKCD Blood](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=770001) `Blood`
@@ -398,6 +399,10 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD DarkPeach](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=de7e5d) `DarkPeach`
 * ![XKCD DarkSalmon](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c85a53) `DarkSalmon`
 * ![XKCD DarkishRed](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=a90308) `DarkishRed`
+* ![XKCD Apricot](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffb16d) `Apricot`
+* ![XKCD Melon](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ff7855) `Melon`
+* ![XKCD Cinnamon](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ac4f06) `Cinnamon`
+* ![XKCD Peach](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffb07c) `Peach`
 
 ### Purple
 * ![XKCD BabyPurple](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ca9bf7) `BabyPurple`
@@ -513,20 +518,23 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD VividPurple](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=9900fa) `VividPurple`
 * ![XKCD WarmPurple](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=952e8f) `WarmPurple`
 * ![XKCD Wisteria](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=a87dc2) `Wisteria`
+
+
+
+
+
+
+
+
 ### Yellow
 * ![XKCD Amber](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=feb308) `Amber`
-* ![XKCD Apricot](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffb16d) `Apricot`
 * ![XKCD Banana](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffff7e) `Banana`
 * ![XKCD BananaYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fafe4b) `BananaYellow`
 * ![XKCD Buff](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fef69e) `Buff`
 * ![XKCD Butter](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffff81) `Butter`
 * ![XKCD ButterYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fffd74) `ButterYellow`
-* ![XKCD Butterscotch](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fdb147) `Butterscotch`
 * ![XKCD Canary](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fdff63) `Canary`
 * ![XKCD CanaryYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fffe40) `CanaryYellow`
-* ![XKCD Caramel](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=af6f09) `Caramel`
-* ![XKCD Chartreuse](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c1f80a) `Chartreuse`
-* ![XKCD Cinnamon](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ac4f06) `Cinnamon`
 * ![XKCD Cream](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffffc2) `Cream`
 * ![XKCD Creme](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffffb6) `Creme`
 * ![XKCD Custard](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fffd78) `Custard`
@@ -569,7 +577,6 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD Mango](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffa62b) `Mango`
 * ![XKCD Manilla](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fffa86) `Manilla`
 * ![XKCD Marigold](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fcc006) `Marigold`
-* ![XKCD Melon](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ff7855) `Melon`
 * ![XKCD MuddyYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=bfac05) `MuddyYellow`
 * ![XKCD Mustard](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ceb301) `Mustard`
 * ![XKCD MustardYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=d2bd0a) `MustardYellow`
@@ -587,7 +594,6 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD PaleGold](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fdde6c) `PaleGold`
 * ![XKCD PalePeach](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffe5ad) `PalePeach`
 * ![XKCD PaleYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffff84) `PaleYellow`
-* ![XKCD Peach](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffb07c) `Peach`
 * ![XKCD PissYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ddd618) `PissYellow`
 * ![XKCD PukeYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c2be0e) `PukeYellow`
 * ![XKCD Saffron](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=feb209) `Saffron`
@@ -603,7 +609,6 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD SunflowerYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ffda03) `SunflowerYellow`
 * ![XKCD SunnyYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fff917) `SunnyYellow`
 * ![XKCD SunshineYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fffd37) `SunshineYellow`
-* ![XKCD Tangerine](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ff9408) `Tangerine`
 * ![XKCD UglyYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=d0c101) `UglyYellow`
 * ![XKCD VomitYellow](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c7c10c) `VomitYellow`
 * ![XKCD Wheat](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fbdd7e) `Wheat`
@@ -859,6 +864,9 @@ KSP XKCD Colors for B9 PAW icons, arranged by color group.  A helpful cheat-shee
 * ![XKCD SandBrown](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=cba560) `SandBrown`
 * ![XKCD SandyBrown](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c4a661) `SandyBrown`
 * ![XKCD Sandstone](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=c9ae74) `Sandstone`
+* ![XKCD Butterscotch](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=fdb147) `Butterscotch`
+* ![XKCD Caramel](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=af6f09) `Caramel`
+* ![XKCD Tangerine](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=ff9408) `Tangerine`
 
 ### Cyan/Aqua/Teal
 * ![XKCD Aqua](https://img.shields.io/static/v1?label=&message=%E2%80%A2&style=flat-square&color=13eac9) `Aqua`
