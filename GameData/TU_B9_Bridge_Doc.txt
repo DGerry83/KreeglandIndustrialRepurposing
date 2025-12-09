@@ -1,0 +1,9 @@
+This very small module has Textures Unlimited listen to events in both editor and flight that fire when the user interacts with the PAW.  The module calls TU's update method when this happens IFF the currentTextureSet is different than it was the last time the module looked at it.
+In editor we pass "true" for user interaction because we want to update both the texture and the preset values(including colors) when the user changes something that updates currentTextureSet(such as a B9 Part Switch module that defines it).
+In flight we pass "false" for user interaction because we want to retain any user-set color changes from the editor, in-case the user wants to change something about the part(like the contents via b9 tank switching) but keep their custom colorway.
+
+In both editor and flight you'll see a "reset texture" button that can be used to reset the texture to its currentTextureSet value and also pass "true" for user interaction to reset the colors to their preset values.  This way you can decide when you change something with b9 if you want to change colorways or not.
+This behavior made sense to me at the time as the best way to provide both conservation of user choice and the option to reset things if you change your mind later.  
+You can also utilize any of the built-in colour schemes on your part this way by swapping tanks with b9, clicking "reset texture", then swapping again.  This gives you the material of the current tank but the color settings of the previous one(the one you "reset" to).
+
+Ultimately the purpose is material swapping without swapping transforms/models.

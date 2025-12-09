@@ -1,0 +1,2 @@
+Unfortunately Textures Unlimited currently contains a bug.  Line 177 of IRecolorable.cs is "detail = 1;" and it needs to be "detail = preset.detail;".  This mod will still work but it will not look correct as all the "detail" slider preset values will be wrong.
+I ran on a version internally with this fix and it worked to solve the problem.  Hopefully TU will implement this change soon, but you can do it yourself very easily as well with the details provided.
