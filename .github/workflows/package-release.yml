@@ -3,23 +3,22 @@ name: Package Kreegland Industrial Repurposing
 on:
   release:
     types: [created]
+
 permissions:
   contents: write
+
 jobs:
   package:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Get the code
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      # 2. Create your custom zip
-      - name: Create KIR zip
+      - name: Create correct zip structure
         run: |
-          zip -r KreeglandIndustrialRepurposing.zip GameData/
+          zip -r KreeglandIndustrialRepurposing.zip GameData/KreeglandIndustrialRepurposing/
       
-      # 3. Upload to GitHub Release
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
