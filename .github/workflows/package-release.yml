@@ -15,9 +15,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Create correct zip structure
+      - name: Create zip
         run: |
-          zip -r KreeglandIndustrialRepurposing.zip GameData/KreeglandIndustrialRepurposing/
+          # Create clean zip with just the folder
+          mkdir -p _staging
+          cp -r GameData/KreeglandIndustrialRepurposing _staging/
+          cd _staging
+          zip -r ../KreeglandIndustrialRepurposing.zip KreeglandIndustrialRepurposing/
+          cd ..
+          rm -rf _staging
       
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
