@@ -1,4 +1,4 @@
-# Kreegland Industria lRepurposing
+# Kreegland Industrial Repurposing
 A Kerbal Space Program Mod
 # About Us
 
