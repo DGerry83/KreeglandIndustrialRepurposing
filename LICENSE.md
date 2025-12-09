@@ -34,7 +34,6 @@ This mod, **Kreegland Industrial Repurposing**, uses multiple licenses depending
 ## 🎨 Art Assets: All Rights Reserved
 - All `.dds` texture files
 - Any other image files
-- 3D models (if any)
 
 **These are NOT open source.** You may:
 - Use them as part of this mod installation
