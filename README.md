@@ -32,6 +32,25 @@ The TexturesUnlimitedB9Bridge.dll file includes a small companion document expla
 #### My materials don't look like the screenshots...
 As of writing(December 8, 2025) Textures Unlimited contains a very minor bug that prevents it from loading the "detail" slider value from color presets.  The change that needs to happen is in IRecolorable.cs on line 177.  "detail = 1;" needs to be replaced with "detail = preset.detail;".  Again, I'm an artist not a coder, but this seemed like the right fix for the problem and it also does solve the problem.  I am not, however, distributing an updated version of the dll.  If you want to make the change and compile it yourself it's fairly straightforward, but I hope this section will be removed from the readme soon because I hope TU incorporates the fix soon.
 
+## 🛠️ Manual Installation
+
+1. Download `KreeglandIndustrialRepurposing.zip`
+2. Extract it to your KSP GameData folder
+3. Enjoy!
+
+
+## ⚠️ Known Issue - Textures Unlimited Bug
+
+The current public version of Textures Unlimited has a bug where it doesn't use 
+the `detail` field from texture set definitions. This affects material appearance.
+
+**Fix submitted:** I've reported this to the TU team with the one-line code fix:
+`detail = 1;` → `detail = preset.detail;` on line 177 of IRecolorable.cs
+
+**Workaround:** Compile TU from source with the fix, or wait for next TU release.
+
+**Status:** https://github.com/KSPModStewards/TexturesUnlimited/issues/7
+
 ### 📦 Dependencies
 
 **REQUIRED MODS:**
