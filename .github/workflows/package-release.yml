@@ -21,7 +21,7 @@ jobs:
       
       # 3. Upload to GitHub Release
       - name: Upload to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             KreeglandIndustrialRepurposing.zip
