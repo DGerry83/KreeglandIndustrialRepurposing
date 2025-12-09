@@ -43,7 +43,12 @@ As of writing(December 8, 2025) Textures Unlimited contains a very minor bug tha
 
 ### 🤝 For Other Modders
 
-TexutresUnlimitedB9Bridge.dll is available for other mods to use!
-It provides immediate TU material updates when changing `currentTextureSet`.
+TexutresUnlimitedB9Bridge.dll(and its source) is available for other mods/modders to use!
+It provides immediate TU material updates when changing `currentTextureSet` via PAW action in flight and in editor.
 
 License: [CC0]
+
+### Remaining licenses
+
+- **Art (.dds files):** All Rights Reserved
+- **Configs & code:** CC BY-SA 4.0
