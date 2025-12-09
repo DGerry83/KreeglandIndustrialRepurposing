@@ -16,7 +16,10 @@ Okay seriously what it does is primarily update the materials on old parts as me
 2. Kontainer - Kerbal Inventory version
 More to come...
 
-
+### Screenshots
+![alt text](https://github.com/DGerry83/KreeglandIndustrialRepurposing/Screenshots/KontainerScreen1.png "Great Wall of Kontainers")
+![alt text](https://github.com/DGerry83/KreeglandIndustrialRepurposing/Screenshots/KontainerScreen2.png "Kontainer Assortment")
+![alt text](https://github.com/DGerry83/KreeglandIndustrialRepurposing/Screenshots/KontainerScreen3.png "Material Kits Kontainer")
 
 
 ## More info...
