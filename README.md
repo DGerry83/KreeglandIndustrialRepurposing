@@ -32,3 +32,18 @@ The TexturesUnlimitedB9Bridge.dll file includes a small companion document expla
 #### My materials don't look like the screenshots...
 As of writing(December 8, 2025) Textures Unlimited contains a very minor bug that prevents it from loading the "detail" slider value from color presets.  The change that needs to happen is in IRecolorable.cs on line 177.  "detail = 1;" needs to be replaced with "detail = preset.detail;".  Again, I'm an artist not a coder, but this seemed like the right fix for the problem and it also does solve the problem.  I am not, however, distributing an updated version of the dll.  If you want to make the change and compile it yourself it's fairly straightforward, but I hope this section will be removed from the readme soon because I hope TU incorporates the fix soon.
 
+### 📦 Dependencies
+
+**REQUIRED MODS:**
+| **USI Tools** | Kontainers system | [GitHub](https://github.com/UmbraSpaceIndustries/USI_Core)
+| **B9 Part Switch** | Part switching | [GitHub](https://github.com/KSPModStewards/B9PartSwitch)
+| **Textures Unlimited** | Texture support | [GitHub](https://github.com/KSPModStewards/TexturesUnlimited)
+| **ModuleManager** | Config patching | [GitHub](https://github.com/sarbian/ModuleManager)
+| **Community Resource Pack** | Standard resources | [GitHub](https://github.com/UmbraSpaceIndustries/CommunityResourcePack)
+
+### 🤝 For Other Modders
+
+TexutresUnlimitedB9Bridge.dll is available for other mods to use!
+It provides immediate TU material updates when changing `currentTextureSet`.
+
+License: [CC0]
