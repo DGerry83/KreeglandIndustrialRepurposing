@@ -18,8 +18,8 @@ This mod, **Kreegland Industrial Repurposing**, uses multiple licenses depending
 
 **Full license:** https://creativecommons.org/licenses/by-sa/4.0/
 
-## 🔌 KreeglandBridge.dll: CC0 1.0
-- The utility DLL in Plugins/KreeglandBridge.dll
+## 🔌 TexturesUnlimitedB9Bridge.dll: CC0 1.0
+- The utility DLL in Plugins/TexturesUnlimitedB9Bridge.dll
 - The source code TexturesUnlimitedB9Bridge.dll
 
 **This is public domain.** You can:
