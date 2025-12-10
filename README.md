@@ -58,7 +58,7 @@ the `detail` field from texture set definitions. This affects material appearanc
 ### 📦 Dependencies
 
 **REQUIRED MODS:**
-| **USI Tools** | Kontainers system | [GitHub](https://github.com/UmbraSpaceIndustries/USI_Core)
+| **USI Core** | Kontainers system | [GitHub](https://github.com/UmbraSpaceIndustries/USI_Core)
 | **B9 Part Switch** | Part switching | [GitHub](https://github.com/KSPModStewards/B9PartSwitch)
 | **Textures Unlimited** | Texture support | [GitHub](https://github.com/KSPModStewards/TexturesUnlimited)
 | **ModuleManager** | Config patching | [GitHub](https://github.com/sarbian/ModuleManager)
