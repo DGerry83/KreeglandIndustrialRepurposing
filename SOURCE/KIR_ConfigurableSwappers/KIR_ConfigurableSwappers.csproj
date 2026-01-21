@@ -47,9 +47,11 @@
     <Compile Include="KIR_BulkConverterSwapOption.cs" />
     <Compile Include="KIR_ConfigurableSwapController.cs" />
     <Compile Include="KIR_ConfigurableSwappableBay.cs" />
+    <Compile Include="KIR_Constants.cs" />
     <Compile Include="KIR_Converter.cs" />
     <Compile Include="KIR_ConverterSwapOption.cs" />
     <Compile Include="KIR_LifeSupportConverterSwapOption.cs" />
+    <Compile Include="KIR_ResourceValidator.cs" />
     <Compile Include="KIR_StackTracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

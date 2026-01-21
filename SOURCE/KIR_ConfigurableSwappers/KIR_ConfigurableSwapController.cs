@@ -106,7 +106,7 @@ namespace KreeglandIndustrialRepurposing
 
             if (ParseBayConfiguration())
             {
-                KIR_DebugLogger.Log($"[KIR-DEBUG] Controller OnLoad - Parsed config: '{AvailableConvertersPerBay}'");
+                KIR_DebugLogger.Log($"Controller OnLoad - Parsed config: '{AvailableConvertersPerBay}'");
             }
         }
 
@@ -116,12 +116,12 @@ namespace KreeglandIndustrialRepurposing
 
             if (_cachedCoreHeat == null)
             {
-                Debug.LogError($"[KIR-HEAT] CRITICAL: No ModuleCoreHeat on part {part.name}");
+                Debug.LogError($"{KIR_Constants.DEBUG_HEAT_PREFIX} CRITICAL: No ModuleCoreHeat on part {part.name}");
                 return;
             }
 
-            Debug.Log($"[KIR-HEAT] Applying properties to ModuleCoreHeat on {part.name}");
-            Debug.Log($"[KIR-HEAT] BEFORE - CoreTempGoal: {_cachedCoreHeat.CoreTempGoal:F1}, CoreTemperature: {_cachedCoreHeat.CoreTemperature:F1} (NaN={double.IsNaN(_cachedCoreHeat.CoreTemperature)})");
+            KIR_DebugLogger.Log($"Applying properties to ModuleCoreHeat on {part.name}");
+            KIR_DebugLogger.Log($"BEFORE - CoreTempGoal: {_cachedCoreHeat.CoreTempGoal:F1}, CoreTemperature: {_cachedCoreHeat.CoreTemperature:F1} (NaN={double.IsNaN(_cachedCoreHeat.CoreTemperature)})");
 
             // Set all thermal properties
             SetCoreHeatField("CoreTempGoal", CoreTempGoal);
@@ -147,7 +147,7 @@ namespace KreeglandIndustrialRepurposing
                 if (checkTempMethod != null)
                 {
                     checkTempMethod.Invoke(_cachedCoreHeat, null);
-                    Debug.LogWarning($"[KIR-HEAT] FIXED: Primed CoreTemperature to {_cachedCoreHeat.CoreTemperature:F1}K");
+                    Debug.LogError($"{KIR_Constants.DEBUG_HEAT_PREFIX}FIXED: Primed CoreTemperature to {_cachedCoreHeat.CoreTempGoal:F1}K");
                 }
             }
 
@@ -162,7 +162,7 @@ namespace KreeglandIndustrialRepurposing
             }
             else
             {
-                Debug.LogError("[KIR-HEAT] CRITICAL: UpdateConverterModuleCache method not found!");
+                Debug.LogError($"{KIR_Constants.DEBUG_HEAT_PREFIX} CRITICAL: UpdateConverterModuleCache method not found!");
             }
         }
 
@@ -176,7 +176,7 @@ namespace KreeglandIndustrialRepurposing
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[KIR] Could not set {fieldName} on ModuleCoreHeat: {ex.Message}");
+                Debug.LogWarning($"{KIR_Constants.DEBUG_HEAT_PREFIX} Could not set {fieldName} on ModuleCoreHeat: {ex.Message}");
             }
         }
 
@@ -200,13 +200,13 @@ namespace KreeglandIndustrialRepurposing
                 string[] parts = trimmed.Split(':');
                 if (parts.Length != 2)
                 {
-                    Debug.LogError($"[KIR] Config parse error at entry {lineNumber}: '{trimmed}' - invalid format (expected 'bay:conv1,conv2')");
+                    Debug.LogError($"{KIR_Constants.DEBUG_LOG_PREFIX} Config parse error at entry {lineNumber}: '{trimmed}' - invalid format (expected 'bay:conv1,conv2')");
                     continue;
                 }
 
                 if (!int.TryParse(parts[0].Trim(), out int bayIndex))
                 {
-                    Debug.LogError($"[KIR] Config parse error at entry {lineNumber}: '{parts[0]}' is not a valid bay number");
+                    Debug.LogError($"{KIR_Constants.DEBUG_LOG_PREFIX} Config parse error at entry {lineNumber}: '{parts[0]}' is not a valid bay number");
                     continue;
                 }
 
@@ -217,7 +217,7 @@ namespace KreeglandIndustrialRepurposing
 
                 if (converters.Count == 0)
                 {
-                    Debug.LogWarning($"[KIR] Config warning at entry {lineNumber}: Bay {bayIndex} has no converter names");
+                    Debug.LogWarning($"{KIR_Constants.DEBUG_LOG_PREFIX} Config warning at entry {lineNumber}: Bay {bayIndex} has no converter names");
                 }
 
                 _bayConverterMap[bayIndex] = converters;
@@ -237,7 +237,7 @@ namespace KreeglandIndustrialRepurposing
 
             if (filtered.Count == 0)
             {
-                KIR_DebugLogger.Log($"[KIR] Bay {bayIndex} has no matching loadouts, returning disabled option only.");
+                KIR_DebugLogger.Log($"Bay {bayIndex} has no matching loadouts, returning disabled option only.");
                 return new List<AbstractSwapOption> { CreateDisabledLoadout() };
             }
 
@@ -260,7 +260,7 @@ namespace KreeglandIndustrialRepurposing
 
             if (loadoutIndex < 0 || loadoutIndex >= Loadouts.Count)
             {
-                Debug.LogError(string.Format("[KIR] Invalid loadoutIndex {0}", loadoutIndex));
+                Debug.LogError($"{KIR_Constants.DEBUG_LOG_PREFIX} Invalid loadoutIndex {loadoutIndex}");
                 return;
             }
 
@@ -282,7 +282,7 @@ namespace KreeglandIndustrialRepurposing
             }
             catch (Exception ex)
             {
-                Debug.LogError(string.Format("[KIR] USI ApplyLoadout failed: {0}", ex));
+                Debug.LogError($"{KIR_Constants.DEBUG_LOG_PREFIX} USI ApplyLoadout failed: {ex}");
                 return;
             }
 
@@ -321,7 +321,7 @@ namespace KreeglandIndustrialRepurposing
             converter.Recipe.Outputs.Clear();
             converter.Recipe.Requirements.Clear();
 
-            converter.ConverterName = "_DISABLED_";
+            converter.ConverterName = KIR_Constants.DISABLED_LOADOUT_NAME;
             converter.StartActionName = "Disabled";
             converter.StopActionName = "Disabled";
             converter.status = "Disabled";
@@ -375,7 +375,7 @@ namespace KreeglandIndustrialRepurposing
         {
             public DisabledSwapOption()
             {
-                ConverterName = "_DISABLED_";
+                ConverterName = KIR_Constants.DISABLED_LOADOUT_NAME;
                 inputList = new List<ResourceRatio>();
                 outputList = new List<ResourceRatio>();
                 reqList = new List<ResourceRatio>();
@@ -401,7 +401,7 @@ namespace KreeglandIndustrialRepurposing
             ConfigNode partConfig = part?.partInfo?.partConfig;
             if (partConfig == null)
             {
-                Debug.LogWarning("[KIR] GetInfo(): No partConfig available");
+                Debug.LogWarning($"{KIR_Constants.DEBUG_LOG_PREFIX} GetInfo(): No partConfig available");
                 return "No converter data available";
             }
 
@@ -527,7 +527,7 @@ namespace KreeglandIndustrialRepurposing
             foreach (string name in names)
             {
                 string trimmed = name.Trim();
-                if (trimmed == "_DISABLED_") continue;
+                if (trimmed == KIR_Constants.DISABLED_LOADOUT_NAME) continue;
                 if (configs.TryGetValue(trimmed, out ConfigNode cfg))
                     result.Add(cfg);
             }

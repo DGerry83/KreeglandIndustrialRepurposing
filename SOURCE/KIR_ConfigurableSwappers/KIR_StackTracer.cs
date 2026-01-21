@@ -9,7 +9,7 @@ namespace KreeglandIndustrialRepurposing
         [Conditional("DEBUG")]
         public static void Log(string message)
         {
-            UnityEngine.Debug.Log("[KIR] " + message);
+            UnityEngine.Debug.Log($"{KIR_Constants.DEBUG_LOG_PREFIX} {message}");
         }
 
         // Stack trace version
@@ -19,11 +19,11 @@ namespace KreeglandIndustrialRepurposing
             if (captureStack)
             {
                 var stack = GetCallChain(4);
-                UnityEngine.Debug.Log(string.Format("[KIR] [{0}] {1}", stack, message));
+                UnityEngine.Debug.Log(string.Format("{0} [{1}] {2}", KIR_Constants.DEBUG_LOG_PREFIX, stack, message));
             }
             else
             {
-                UnityEngine.Debug.Log("[KIR] " + message);
+                UnityEngine.Debug.Log($"{KIR_Constants.DEBUG_LOG_PREFIX} {message}");
             }
         }
 
@@ -31,7 +31,7 @@ namespace KreeglandIndustrialRepurposing
         [Conditional("DEBUG")]
         public static void LogFormat(string format, params object[] args)
         {
-            UnityEngine.Debug.LogFormat("[KIR] " + format, args);
+            UnityEngine.Debug.LogFormat($"{KIR_Constants.DEBUG_LOG_PREFIX} " + format, args);
         }
 
         // Stack trace format version
@@ -42,11 +42,11 @@ namespace KreeglandIndustrialRepurposing
             if (captureStack)
             {
                 var stack = GetCallChain(4);
-                UnityEngine.Debug.Log(string.Format("[KIR] [{0}] {1}", stack, message));
+                UnityEngine.Debug.Log(string.Format("{0} [{1}] {2}", KIR_Constants.DEBUG_LOG_PREFIX, stack, message));
             }
             else
             {
-                UnityEngine.Debug.LogFormat("[KIR] " + format, args);
+                UnityEngine.Debug.LogFormat($"{KIR_Constants.DEBUG_LOG_PREFIX} " + format, args);
             }
         }
 

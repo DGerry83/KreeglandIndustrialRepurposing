@@ -29,7 +29,7 @@ namespace KreeglandIndustrialRepurposing
                 var converter = converters[moduleIndex];
                 converter.StartResourceConverter();
                 UpdateConverterUI();
-                KIR_DebugLogger.Log(string.Format("[KIR] Bay {0}: Started converter '{1}'", bayName, converter.ConverterName));
+                KIR_DebugLogger.Log(string.Format("Bay {0}: Started converter '{1}'", bayName, converter.ConverterName));
             }
         }
 
@@ -42,7 +42,7 @@ namespace KreeglandIndustrialRepurposing
                 var converter = converters[moduleIndex];
                 converter.StopResourceConverter();
                 UpdateConverterUI();
-                KIR_DebugLogger.Log(string.Format("[KIR] Bay {0}: Stopped converter '{1}'", bayName, converter.ConverterName));
+                KIR_DebugLogger.Log(string.Format("Bay {0}: Stopped converter '{1}'", bayName, converter.ConverterName));
             }
         }
 
@@ -90,9 +90,8 @@ namespace KreeglandIndustrialRepurposing
             }
 
             _baseDisplayLoadoutField.SetValue(this, newIndex);
-            selectedConverterUI = _filteredLoadouts[newIndex].ConverterName;
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] NextSetup: {0} -> {1}, selected='{2}'",
-                currentDisplayIndex, newIndex, selectedConverterUI));
+            selectedConverterUI = _filteredLoadouts[newIndex].ConverterName == KIR_Constants.DISABLED_LOADOUT_NAME ? "Disabled" : _filteredLoadouts[newIndex].ConverterName;
+            KIR_DebugLogger.Log(string.Format("{0} NextSetup: {1} -> {2}, selected='{3}'", KIR_Constants.DEBUG_EVA_PREFIX, currentDisplayIndex, newIndex, selectedConverterUI));
 
             ChangeMenu();
         }
@@ -136,9 +135,8 @@ namespace KreeglandIndustrialRepurposing
             }
 
             _baseDisplayLoadoutField.SetValue(this, newIndex);
-            selectedConverterUI = _filteredLoadouts[newIndex].ConverterName;
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] PrevSetup: {0} -> {1}, selected='{2}'",
-                currentDisplayIndex, newIndex, selectedConverterUI));
+            selectedConverterUI = _filteredLoadouts[newIndex].ConverterName == KIR_Constants.DISABLED_LOADOUT_NAME ? "Disabled" : _filteredLoadouts[newIndex].ConverterName;
+            KIR_DebugLogger.Log(string.Format("{0} PrevSetup: {1} -> {2}, selected='{3}'", KIR_Constants.DEBUG_EVA_PREFIX, currentDisplayIndex, newIndex, selectedConverterUI));
 
             ChangeMenu();
         }
@@ -146,7 +144,7 @@ namespace KreeglandIndustrialRepurposing
         [KSPEvent(guiActive = false, guiActiveEditor = false, guiName = "B1: Install", active = false, guiActiveUnfocused = true, externalToEVAOnly = true, unfocusedRange = 10f)]
         public void KIR_LoadSetup()
         {
-            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup started");
+            KIR_DebugLogger.Log(string.Format("{0} LoadSetup started", KIR_Constants.DEBUG_EVA_PREFIX));
 
             // Step 1: Validate all preconditions (abort if any fail)
             if (!ValidateLoadSetupPreconditions())
@@ -173,41 +171,41 @@ namespace KreeglandIndustrialRepurposing
         /// <returns>True if all preconditions pass, false otherwise.</returns>
         private bool ValidateLoadSetupPreconditions()
         {
-            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup preflight check started");
+            KIR_DebugLogger.Log(string.Format("{0} LoadSetup preflight check started", KIR_Constants.DEBUG_EVA_PREFIX));
 
             if (!_bayInitialized || _isDisabled)
             {
-                KIR_DebugLogger.Log($"[KIR-EVA] LoadSetup aborted: _bayInitialized={_bayInitialized}, _isDisabled={_isDisabled}");
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: _bayInitialized={1}, _isDisabled={2}", KIR_Constants.DEBUG_EVA_PREFIX, _bayInitialized, _isDisabled));
                 return false;
             }
 
             if (_filteredLoadouts == null || _filteredLoadouts.Count == 0)
             {
-                KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: no loadouts");
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: no loadouts", KIR_Constants.DEBUG_EVA_PREFIX));
                 return false;
             }
 
             if (!CheckResourcesCustom())
             {
-                KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: resource check failed");
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: resource check failed", KIR_Constants.DEBUG_EVA_PREFIX));
                 return false;
             }
 
             var controller = GetKirController();
             if (controller == null)
             {
-                KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: controller is null");
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: controller is null", KIR_Constants.DEBUG_EVA_PREFIX));
                 return false;
             }
 
             var converters = part.FindModulesImplementing<USI_Converter>();
             if (converters.Count == 0)
             {
-                KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: no converters");
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: no converters", KIR_Constants.DEBUG_EVA_PREFIX));
                 return false;
             }
 
-            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup preflight check PASSED");
+            KIR_DebugLogger.Log(string.Format("{0} LoadSetup preflight check PASSED", KIR_Constants.DEBUG_EVA_PREFIX));
             return true;
         }
 
@@ -227,7 +225,7 @@ namespace KreeglandIndustrialRepurposing
                     if (_filteredLoadouts[i].ConverterName == selectedConverterUI)
                     {
                         displayIndex = i;
-                        KIR_DebugLogger.Log($"[KIR-EVA] Resolved index from selectedConverterUI: {i}");
+                        KIR_DebugLogger.Log(string.Format("{0} Resolved index from selectedConverterUI: {1}", KIR_Constants.DEBUG_EVA_PREFIX, i));
                         break;
                     }
                 }
@@ -248,7 +246,7 @@ namespace KreeglandIndustrialRepurposing
             oldName = _kirPersistedConverterName;
             newName = _filteredLoadouts[currentLoadout].ConverterName;
 
-            KIR_DebugLogger.Log($"[KIR-EVA] Executing change: '{oldName}' -> '{newName}'");
+            KIR_DebugLogger.Log(string.Format("{0} Executing change: '{1}' -> '{2}'", KIR_Constants.DEBUG_EVA_PREFIX, oldName, newName));
 
             ApplyLoadout(controller, converters);
         }
@@ -271,7 +269,7 @@ namespace KreeglandIndustrialRepurposing
                 string.Format("Reconfiguration from {0} to {1} completed.", oldName, newName),
                 5f, ScreenMessageStyle.UPPER_CENTER);
 
-            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup completed successfully");
+            KIR_DebugLogger.Log(string.Format("{0} LoadSetup completed successfully", KIR_Constants.DEBUG_EVA_PREFIX));
         }
 
         [KSPField(isPersistant = true)]
@@ -284,7 +282,7 @@ namespace KreeglandIndustrialRepurposing
         private KIR_ConfigurableSwapController GetKirController()
         {
             var controller = part.FindModuleImplementing<KIR_ConfigurableSwapController>();
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] GetKirController: {0}", controller != null ? "found" : "null"));
+            KIR_DebugLogger.Log(string.Format("{0} GetKirController: {1}", KIR_Constants.DEBUG_EVA_PREFIX, controller != null ? "found" : "null"));
             return controller;
         }
 
@@ -532,11 +530,11 @@ namespace KreeglandIndustrialRepurposing
             if (controller == null)
                 controller = GetKirController();
 
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] RefreshFilteredLoadouts controller={0}", controller != null));
+            KIR_DebugLogger.Log(string.Format("{0} RefreshFilteredLoadouts controller={1}", KIR_Constants.DEBUG_EVA_PREFIX, controller != null));
 
             if (controller == null)
             {
-                Debug.LogWarning(string.Format("[KIR] Bay{0} cannot find controller", moduleIndex));
+                Debug.LogWarning(string.Format("{0} Bay{1} cannot find controller", KIR_Constants.DEBUG_LOG_PREFIX, moduleIndex));
                 SetupDisabledBay();
                 return;
             }
@@ -578,7 +576,7 @@ namespace KreeglandIndustrialRepurposing
             InitializeSelectionUI();
             SyncSelectionUI();
             SetupEnabledBay();
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] RefreshFilteredLoadouts complete: _isDisabled={0}, count={1}", _isDisabled, _filteredLoadouts.Count));
+            KIR_DebugLogger.Log(string.Format("{0} RefreshFilteredLoadouts complete: _isDisabled={1}, count={2}", KIR_Constants.DEBUG_EVA_PREFIX, _isDisabled, _filteredLoadouts.Count));
         }
 
         private void SetupDisabledBay()
@@ -594,7 +592,7 @@ namespace KreeglandIndustrialRepurposing
             Events["StopConverter"].active = false;
             Fields["converterStatus"].guiActive = false;
             Fields["converterLoad"].guiActive = false;
-            curTemplate = "_DISABLED_";
+            curTemplate = KIR_Constants.DISABLED_LOADOUT_NAME;
             MonoUtilities.RefreshContextWindows(part);
         }
 
@@ -611,7 +609,7 @@ namespace KreeglandIndustrialRepurposing
             if (_baseDisplayLoadoutField != null)
                 _baseDisplayLoadoutField.SetValue(this, currentLoadout);
 
-            if (loadout == null || loadout.ConverterName == "_DISABLED_")
+            if (loadout == null || loadout.ConverterName == KIR_Constants.DISABLED_LOADOUT_NAME)
             {
                 SetupDisabledBay();
                 return;
@@ -647,8 +645,7 @@ namespace KreeglandIndustrialRepurposing
             UpdateButtonNames();
 
             // Log current preview state for debugging
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] ChangeMenu: previewConverter='{0}', selectedConverterUI='{1}'",
-                GetPreviewConverterName(), selectedConverterUI));
+            KIR_DebugLogger.Log(string.Format("{0} ChangeMenu: previewConverter='{1}', selectedConverterUI='{2}'", KIR_Constants.DEBUG_EVA_PREFIX, GetPreviewConverterName(), selectedConverterUI));
 
             // Apply visibility rules and refresh
             UpdateAllUIVisibility();
@@ -768,29 +765,28 @@ namespace KreeglandIndustrialRepurposing
 
         private void ApplyLoadout(KIR_ConfigurableSwapController controller, List<USI_Converter> converters)
         {
-            KIR_DebugLogger.Log("[KIR-EVA] Starting Parameterized ApplyLoadout()");
             if (_filteredLoadouts == null || currentLoadout < 0 || currentLoadout >= _filteredLoadouts.Count)
             {
-                KIR_DebugLogger.Log("[KIR-EVA] Early Exit due to _filteredLoadouts == null || currentLoadout < 0 || currentLoadout >= _filteredLoadouts.Count");
+                KIR_DebugLogger.Log(string.Format("{0}Early Exit due to _filteredLoadouts == null || currentLoadout < 0 || currentLoadout >= _filteredLoadouts.Count", KIR_Constants.DEBUG_EVA_PREFIX));
                 return;
             }
 
             var loadout = _filteredLoadouts[currentLoadout];
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] loadout set to {0}", loadout));
+            KIR_DebugLogger.Log(string.Format("{0} loadout set to {1}", KIR_Constants.DEBUG_EVA_PREFIX, loadout));
             if (loadout == null || loadout.ConverterName == "_DISABLED_")
             {
-                KIR_DebugLogger.Log("[KIR-EVA] loadout was null OR _DISABLED_, running SetupDisabledBay() and then exiting");
+                KIR_DebugLogger.Log(string.Format("{0} loadout was null OR {1}, running SetupDisabledBay() and then exiting", KIR_Constants.DEBUG_EVA_PREFIX, KIR_Constants.DISABLED_LOADOUT_NAME));
                 SetupDisabledBay();
                 return;
             }
 
             int fullIndex = FindLoadoutIndex(loadout.ConverterName);
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] fullIndex set to {0}", fullIndex));
+            KIR_DebugLogger.Log(string.Format("{0} fullIndex set to {1}", KIR_Constants.DEBUG_EVA_PREFIX, fullIndex));
             if (fullIndex >= 0)
             {
                 controller.ApplyLoadout(fullIndex, moduleIndex, converters);
                 curTemplate = loadout.ConverterName;
-                KIR_DebugLogger.Log(string.Format("[KIR-EVA] curTemplate set to {0}", curTemplate));
+                KIR_DebugLogger.Log(string.Format("{0} curTemplate set to {1}", KIR_Constants.DEBUG_EVA_PREFIX, curTemplate));
                 _kirPersistedConverterName = curTemplate;
                 if (_baseDisplayLoadoutField != null)
                     _baseDisplayLoadoutField.SetValue(this, currentLoadout);
@@ -799,16 +795,16 @@ namespace KreeglandIndustrialRepurposing
 
         private int FindLoadoutIndex(string converterName)
         {
-            if (converterName == "_DISABLED_")
+            if (converterName == KIR_Constants.DISABLED_LOADOUT_NAME)
             {
-                KIR_DebugLogger.Log("[KIR-EVA] converterName was _DISABLED_, returning -1");
+                KIR_DebugLogger.Log(string.Format("{0} converterName was {1}, returning -1", KIR_Constants.DEBUG_EVA_PREFIX, KIR_Constants.DISABLED_LOADOUT_NAME));
                 return -1;
             }
 
             var controller = GetKirController();
             if (controller == null)
             {
-                KIR_DebugLogger.Log("[KIR-EVA] controller was NULL, returning -1");
+                KIR_DebugLogger.Log(string.Format("{0} controller was NULL, returning -1", KIR_Constants.DEBUG_EVA_PREFIX));
                 return -1;
             }
 
@@ -816,17 +812,17 @@ namespace KreeglandIndustrialRepurposing
             {
                 if (controller.Loadouts[i].ConverterName == converterName)
                 {
-                    KIR_DebugLogger.Log(string.Format("[KIR-EVA] Loadout found ({0}) returning converterName {1}", controller.Loadouts[i].ConverterName, converterName));
+                    KIR_DebugLogger.Log(string.Format("{0} Loadout found ({1}) returning converterName {2}", KIR_Constants.DEBUG_EVA_PREFIX, controller.Loadouts[i].ConverterName, converterName));
                     return i;
                 }
             }
-            KIR_DebugLogger.Log("[KIR-EVA] for loop failed, returning -1");
+            KIR_DebugLogger.Log(string.Format("{0} for loop failed, returning -1", KIR_Constants.DEBUG_EVA_PREFIX));
             return -1;
         }
 
         private bool CheckResourcesCustom()
         {
-            KIR_DebugLogger.Log("[KIR-EVA] CheckResourcesCustom started");
+            KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom started", KIR_Constants.DEBUG_EVA_PREFIX));
 
             if (HighLogic.LoadedSceneIsEditor) return true;
 
@@ -854,7 +850,7 @@ namespace KreeglandIndustrialRepurposing
                     }
                 }
 
-                KIR_DebugLogger.Log(string.Format("[KIR-EVA] CheckResourcesCustom skill check result: {0}", foundRepairSkill));
+                KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom skill check result: {1}", KIR_Constants.DEBUG_EVA_PREFIX, foundRepairSkill));
 
                 if (!foundRepairSkill)
                 {
@@ -864,14 +860,14 @@ namespace KreeglandIndustrialRepurposing
             }
 
             float costMultiplier = USI_ConverterOptions.ConverterSwapCostMultiplierValue;
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] CheckResourcesCustom costMultiplier: {0}", costMultiplier));
+            KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom costMultiplier: {1}", KIR_Constants.DEBUG_EVA_PREFIX, costMultiplier));
 
             if (costMultiplier > ResourceUtilities.FLOAT_TOLERANCE)
             {
                 var controller = GetKirController();
                 if (controller == null)
                 {
-                    KIR_DebugLogger.Log("[KIR-EVA] CheckResourcesCustom early exit: no controller");
+                    KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom early exit: no controller", KIR_Constants.DEBUG_EVA_PREFIX));
                     return true;
                 }
 
@@ -879,11 +875,11 @@ namespace KreeglandIndustrialRepurposing
                 {
                     if (!HasResourceCustom(resource))
                     {
-                        KIR_DebugLogger.Log(string.Format("[KIR-EVA] CheckResourcesCustom failed: missing {0}", resource.ResourceName));
+                        KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom failed: missing {1}", KIR_Constants.DEBUG_EVA_PREFIX, resource.ResourceName));
                         return false;
                     }
                 }
-                KIR_DebugLogger.Log("[KIR-EVA] CheckResourcesCustom all resources present");
+                KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom all resources present", KIR_Constants.DEBUG_EVA_PREFIX));
             }
             return true;
         }
