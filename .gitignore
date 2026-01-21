@@ -1,0 +1,20 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/SOURCE/packages
+/SOURCE/.vs/KIR_Master.slnx
+/SOURCE/KIR_ConfigurableSwappers/obj
+/SOURCE/TexturesUnlimitedB9Bridge/obj
+/SOURCE/TexturesUnlimitedB9Bridge/.vs
+/SOURCE/KIR_CoreHeatVisualizer/obj
+/SOURCE/KIR_LS_Converters/obj
+/SOURCE/MigrationBackup
+/SOURCE/GameData
+/SOURCE/KIR_CoreHeatVisualizer/.vs
+/SOURCE/KIR_CoreHeatVisualizer/bin/Debug
+/SOURCE/KIR_LS_Converters/.vs
+/SOURCE/KIR_LS_Converters/bin/Debug
+/SOURCE/TexturesUnlimitedB9Bridge/bin/Debug
+/SOURCE/KIR_ConfigurableSwappers/bin/Debug
