@@ -148,38 +148,78 @@ namespace KreeglandIndustrialRepurposing
         {
             KIR_DebugLogger.Log("[KIR-EVA] LoadSetup started");
 
+            // Step 1: Validate all preconditions (abort if any fail)
+            if (!ValidateLoadSetupPreconditions())
+                return;
+
+            var controller = GetKirController();
+            var converters = part.FindModulesImplementing<USI_Converter>();
+
+            // Step 2: Resolve which converter to load from persistent state
+            int targetIndex = ResolveTargetLoadoutIndex();
+            currentLoadout = targetIndex;
+
+            // Step 3: Apply loadout and capture name changes
+            string oldTemplate, newTemplate;
+            ExecuteLoadoutChange(controller, converters, out oldTemplate, out newTemplate);
+
+            // Step 4: Finalize UI updates and persistence
+            CompleteLoadSetup(oldTemplate, newTemplate);
+        }
+
+        /// <summary>
+        /// Validates all preconditions for a loadout change. Logs specific abort reasons.
+        /// </summary>
+        /// <returns>True if all preconditions pass, false otherwise.</returns>
+        private bool ValidateLoadSetupPreconditions()
+        {
+            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup preflight check started");
+
             if (!_bayInitialized || _isDisabled)
             {
-                KIR_DebugLogger.Log(string.Format("[KIR-EVA] LoadSetup aborted: _bayInitialized={0}, _isDisabled={1}", _bayInitialized, _isDisabled));
-                return;
+                KIR_DebugLogger.Log($"[KIR-EVA] LoadSetup aborted: _bayInitialized={_bayInitialized}, _isDisabled={_isDisabled}");
+                return false;
             }
+
             if (_filteredLoadouts == null || _filteredLoadouts.Count == 0)
             {
                 KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: no loadouts");
-                return;
+                return false;
             }
+
             if (!CheckResourcesCustom())
             {
                 KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: resource check failed");
-                return;
+                return false;
             }
 
             var controller = GetKirController();
             if (controller == null)
             {
                 KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: controller is null");
-                return;
+                return false;
             }
 
             var converters = part.FindModulesImplementing<USI_Converter>();
             if (converters.Count == 0)
             {
                 KIR_DebugLogger.Log("[KIR-EVA] LoadSetup aborted: no converters");
-                return;
+                return false;
             }
 
-            // Get index from persistable field
-            int displayIndex = currentLoadout; // Fallback to installed
+            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup preflight check PASSED");
+            return true;
+        }
+
+        /// <summary>
+        /// Resolves the target loadout index from persistable UI state (selectedConverterUI),
+        /// falling back to currentLoadout if UI state is empty or invalid.
+        /// </summary>
+        /// <returns>The resolved target index.</returns>
+        private int ResolveTargetLoadoutIndex()
+        {
+            int displayIndex = currentLoadout; // Default to currently installed
+
             if (!string.IsNullOrEmpty(selectedConverterUI))
             {
                 for (int i = 0; i < _filteredLoadouts.Count; i++)
@@ -187,35 +227,51 @@ namespace KreeglandIndustrialRepurposing
                     if (_filteredLoadouts[i].ConverterName == selectedConverterUI)
                     {
                         displayIndex = i;
-                        KIR_DebugLogger.Log(string.Format("[KIR-EVA] LoadSetup using selectedConverterUI index: {0}", i));
+                        KIR_DebugLogger.Log($"[KIR-EVA] Resolved index from selectedConverterUI: {i}");
                         break;
                     }
                 }
             }
 
-            currentLoadout = Mathf.Clamp(displayIndex, 0, _filteredLoadouts.Count - 1);
+            return Mathf.Clamp(displayIndex, 0, _filteredLoadouts.Count - 1);
+        }
 
-            // Capture old and new names for message
-            string oldTemplate = _kirPersistedConverterName;
-            string newTemplate = _filteredLoadouts[currentLoadout].ConverterName;
+        /// <summary>
+        /// Executes the loadout change by applying it to the converter and capturing old/new names.
+        /// </summary>
+        /// <param name="controller">The KIR controller instance</param>
+        /// <param name="converters">List of converter modules</param>
+        /// <param name="oldName">Output: previous converter name</param>
+        /// <param name="newName">Output: new converter name</param>
+        private void ExecuteLoadoutChange(KIR_ConfigurableSwapController controller, List<USI_Converter> converters, out string oldName, out string newName)
+        {
+            oldName = _kirPersistedConverterName;
+            newName = _filteredLoadouts[currentLoadout].ConverterName;
 
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] LoadSetup old='{0}', new='{1}'", oldTemplate, newTemplate));
+            KIR_DebugLogger.Log($"[KIR-EVA] Executing change: '{oldName}' -> '{newName}'");
 
-            // Apply the loadout
             ApplyLoadout(controller, converters);
+        }
 
-            // Update UI (this calls UpdateConverterUI which will overwrite curTemplate)
+        /// <summary>
+        /// Completes the loadout setup by updating UI, persistence, and showing user message.
+        /// </summary>
+        /// <param name="oldName">Previous converter name for message</param>
+        /// <param name="newName">New converter name for message</param>
+        private void CompleteLoadSetup(string oldName, string newName)
+        {
+            // Update UI (calls UpdateConverterUI, may overwrite curTemplate)
             ChangeMenu();
 
-            // Update persistence
-            _kirPersistedConverterName = newTemplate;
+            // Update persistent state
+            _kirPersistedConverterName = newName;
 
-            // Show message with captured names
+            // Show user confirmation
             ScreenMessages.PostScreenMessage(
-                string.Format("Reconfiguration from {0} to {1} completed.", oldTemplate, newTemplate),
+                string.Format("Reconfiguration from {0} to {1} completed.", oldName, newName),
                 5f, ScreenMessageStyle.UPPER_CENTER);
 
-            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup completed");
+            KIR_DebugLogger.Log("[KIR-EVA] LoadSetup completed successfully");
         }
 
         [KSPField(isPersistant = true)]
@@ -587,17 +643,49 @@ namespace KreeglandIndustrialRepurposing
 
         public new void ChangeMenu()
         {
+            // Early exit for uninitialized/disabled bays
+            if (ShouldSkipChangeMenu())
+                return;
+
+            // Validate and clamp persisted state
+            currentLoadout = Mathf.Clamp(currentLoadout, 0, _filteredLoadouts.Count - 1);
+            SyncPersistentDisplayField();
+
+            // Update display field name
+            Fields["curTemplate"].guiName = _filteredLoadouts[currentLoadout].ConverterName;
+
+            // Update button names based on preview
+            UpdateButtonNames();
+
+            // Log current preview state for debugging
+            KIR_DebugLogger.Log(string.Format("[KIR-EVA] ChangeMenu: previewConverter='{0}', selectedConverterUI='{1}'",
+                GetPreviewConverterName(), selectedConverterUI));
+
+            // Apply visibility rules and refresh
+            UpdateAllUIVisibility();
+            MonoUtilities.RefreshContextWindows(part);
+        }
+        /// <summary>
+        /// Determines whether ChangeMenu should exit early or call base implementation
+        /// </summary>
+        private bool ShouldSkipChangeMenu()
+        {
             if (!_bayInitialized || _filteredLoadouts == null || _filteredLoadouts.Count == 0)
             {
                 if (!_bayInitialized)
                     base.ChangeMenu();
-                return;
+                return true;
             }
+            return false;
+        }
 
-            currentLoadout = Mathf.Clamp(currentLoadout, 0, _filteredLoadouts.Count - 1);
+        /// <summary>
+        /// Resolves the display index from selectedConverterUI, falling back to currentLoadout
+        /// </summary>
+        private int ResolveDisplayIndex()
+        {
+            int displayIndex = currentLoadout; // Default fallback
 
-            // Get the PERSISTABLE selection index from selectedConverterUI
-            int displayIndex = currentLoadout; // Default fallback to installed
             if (!string.IsNullOrEmpty(selectedConverterUI))
             {
                 for (int i = 0; i < _filteredLoadouts.Count; i++)
@@ -610,44 +698,71 @@ namespace KreeglandIndustrialRepurposing
                 }
             }
 
-            if (baseDisplayLoadoutField != null)
-                baseDisplayLoadoutField.SetValue(this, Mathf.Clamp((int)baseDisplayLoadoutField.GetValue(this), 0, _filteredLoadouts.Count - 1));
-            if (baseDisplayLoadoutField != null && (int)baseDisplayLoadoutField.GetValue(this) != currentLoadout)
-                baseDisplayLoadoutField.SetValue(this, currentLoadout);
+            return Mathf.Clamp(displayIndex, 0, _filteredLoadouts.Count - 1);
+        }
 
-            bool evaRequired = USI_ConverterOptions.ConverterSwapRequiresEVAEnabled;
-            bool isEditor = HighLogic.LoadedSceneIsEditor;
-            bool shouldShowUI = !_isDisabled && !hasPermanentLoadout;
-            bool isMultiOption = shouldShowUI && _filteredLoadouts.Count >= 2;
-            bool isEVA = FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.isEVA;
+        /// <summary>
+        /// Gets the preview converter name based on persistent UI state
+        /// </summary>
+        private string GetPreviewConverterName()
+        {
+            if (_filteredLoadouts == null || _filteredLoadouts.Count == 0)
+                return string.Empty;
 
-            Fields["curTemplate"].guiName = _filteredLoadouts[currentLoadout].ConverterName;
+            int displayIndex = ResolveDisplayIndex();
+            return _filteredLoadouts[displayIndex].ConverterName;
+        }
 
-            // Use displayIndex (from selectedConverterUI) for preview
-            string previewConverter = _filteredLoadouts[Mathf.Clamp(displayIndex, 0, _filteredLoadouts.Count - 1)].ConverterName;
-            KIR_DebugLogger.Log(string.Format("[KIR-EVA] ChangeMenu: previewConverter='{0}', selectedConverterUI='{1}'",
-                previewConverter, selectedConverterUI));
+        /// <summary>
+        /// Updates Next/Prev/Install button names based on preview state
+        /// </summary>
+        private void UpdateButtonNames()
+        {
+            string previewConverter = GetPreviewConverterName();
 
             Events["KIR_NextSetup"].guiName = string.Format("{0} Next", bayName).Trim();
             Events["KIR_PrevSetup"].guiName = string.Format("{0} Prev.", bayName).Trim();
             Events["KIR_LoadSetup"].guiName = string.Format("{0} Install {1}", bayName, previewConverter).Trim();
+        }
 
-            // Selector logic
+        /// <summary>
+        /// Syncs the base class's private displayLoadout field with currentLoadout
+        /// </summary>
+        private void SyncPersistentDisplayField()
+        {
+            if (baseDisplayLoadoutField == null) return;
+
+            int currentValue = (int)baseDisplayLoadoutField.GetValue(this);
+            int clampedValue = Mathf.Clamp(currentValue, 0, _filteredLoadouts?.Count - 1 ?? 0);
+
+            if (currentValue != clampedValue)
+                baseDisplayLoadoutField.SetValue(this, clampedValue);
+
+            if (clampedValue != currentLoadout)
+                baseDisplayLoadoutField.SetValue(this, currentLoadout);
+        }
+
+        /// <summary>
+        /// Updates visibility states for all UI fields and controls
+        /// </summary>
+        private void UpdateAllUIVisibility()
+        {
+            bool isEditor = HighLogic.LoadedSceneIsEditor;
+            bool shouldShowUI = !_isDisabled && !hasPermanentLoadout;
+            bool isMultiOption = shouldShowUI && _filteredLoadouts.Count >= 2;
+
             Fields["selectedConverterUI"].guiActiveEditor = isMultiOption;
             Fields["selectedConverterUI"].guiActive = false; // Never in flight
 
-            //Recipe and Status display logic:
-            Fields["curTemplate"].guiActiveEditor = !isMultiOption; //Show in editor if there are less than 2 options available
-            Fields["curTemplate"].guiActive = !_isDisabled; //Show in flight as long as the bay isn't disabled
+            Fields["curTemplate"].guiActiveEditor = !isMultiOption;
+            Fields["curTemplate"].guiActive = !_isDisabled;
 
-            // Update content immediately in flight
             if (shouldShowUI && !isEditor)
             {
                 UpdateConverterUI();
             }
-
-            MonoUtilities.RefreshContextWindows(part);
         }
+
 
         private void ApplyLoadout()
         {

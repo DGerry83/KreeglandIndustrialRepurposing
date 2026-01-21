@@ -392,6 +392,7 @@ namespace KreeglandIndustrialRepurposing
             return "KIR Configurable Bays";
         }
 
+
         #region Draw Parts List Info
         public override string GetInfo()
         {
@@ -409,33 +410,11 @@ namespace KreeglandIndustrialRepurposing
 
             if (b9Node == null)
             {
-                // Use runtime bay config to show structured bays without B9
-                string baseBayConfig = AvailableConvertersPerBay;
-                if (string.IsNullOrEmpty(baseBayConfig))
-                {
-                    sb.AppendLine("<color=#FF8000>No bay configuration defined</color>");
-                }
-                else
-                {
-                    sb.AppendLine("<color=#FFFF00>Available Converters:</color>");
-                    ParseBayConfig(baseBayConfig, converterConfigs, sb);
-                }
+                sb.Append(BuildNonB9InfoString(partConfig, converterConfigs));
                 return sb.ToString();
             }
 
-            // With B9: Show hierarchical subtype grouping
-            foreach (ConfigNode subtypeNode in b9Node.GetNodes("SUBTYPE"))
-            {
-                string title = subtypeNode.GetValue("title");
-                if (string.IsNullOrEmpty(title)) continue;
-
-                sb.Append("<color=#FFFF00>");
-                sb.AppendLine(title + "</color>");
-
-                ParseSubtypeForConverters(subtypeNode, converterConfigs, sb);
-                sb.AppendLine();
-            }
-
+            sb.Append(BuildB9InfoString(b9Node, converterConfigs));
             return sb.ToString();
         }
 
@@ -645,6 +624,47 @@ namespace KreeglandIndustrialRepurposing
 
             return string.Format("{0:F2}/s", ratio);
         }
+
+        #region Method Extraction - Stage 1
+
+        private string BuildNonB9InfoString(ConfigNode partConfig, Dictionary<string, ConfigNode> converterConfigs)
+        {
+            StringBuilder sb = new StringBuilder();
+            string baseBayConfig = AvailableConvertersPerBay;
+
+            if (string.IsNullOrEmpty(baseBayConfig))
+            {
+                sb.AppendLine("<color=#FF8000>No bay configuration defined</color>");
+            }
+            else
+            {
+                sb.AppendLine("<color=#FFFF00>Available Converters:</color>");
+                ParseBayConfig(baseBayConfig, converterConfigs, sb);
+            }
+
+            return sb.ToString();
+        }
+
+        private string BuildB9InfoString(ConfigNode b9Node, Dictionary<string, ConfigNode> converterConfigs)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            foreach (ConfigNode subtypeNode in b9Node.GetNodes("SUBTYPE"))
+            {
+                string title = subtypeNode.GetValue("title");
+                if (string.IsNullOrEmpty(title)) continue;
+
+                sb.Append("<color=#FFFF00>");
+                sb.AppendLine(title + "</color>");
+
+                ParseSubtypeForConverters(subtypeNode, converterConfigs, sb);
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+
+        #endregion
         #endregion
     }
 }
