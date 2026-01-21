@@ -89,7 +89,7 @@ namespace KreeglandIndustrialRepurposing
                     newIndex = 0;
             }
 
-            baseDisplayLoadoutField.SetValue(this, newIndex);
+            _baseDisplayLoadoutField.SetValue(this, newIndex);
             selectedConverterUI = _filteredLoadouts[newIndex].ConverterName;
             KIR_DebugLogger.Log(string.Format("[KIR-EVA] NextSetup: {0} -> {1}, selected='{2}'",
                 currentDisplayIndex, newIndex, selectedConverterUI));
@@ -135,7 +135,7 @@ namespace KreeglandIndustrialRepurposing
                     newIndex = _filteredLoadouts.Count - 1;
             }
 
-            baseDisplayLoadoutField.SetValue(this, newIndex);
+            _baseDisplayLoadoutField.SetValue(this, newIndex);
             selectedConverterUI = _filteredLoadouts[newIndex].ConverterName;
             KIR_DebugLogger.Log(string.Format("[KIR-EVA] PrevSetup: {0} -> {1}, selected='{2}'",
                 currentDisplayIndex, newIndex, selectedConverterUI));
@@ -277,11 +277,9 @@ namespace KreeglandIndustrialRepurposing
         [KSPField(isPersistant = true)]
         private string _kirPersistedConverterName = "";
 
-        private FieldInfo baseControllerField => typeof(USI_SwappableBay).GetField("_controller",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-
-        private FieldInfo baseDisplayLoadoutField => typeof(USI_SwappableBay).GetField("displayLoadout",
-            BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo _baseDisplayLoadoutField =
+            typeof(USI_SwappableBay).GetField("displayLoadout",
+                BindingFlags.NonPublic | BindingFlags.Instance);
 
         private KIR_ConfigurableSwapController GetKirController()
         {
@@ -294,8 +292,6 @@ namespace KreeglandIndustrialRepurposing
         {
             base.OnStart(state);
             DisableUSIBaseEvents();
-            // Remove the reflection hack - let USI manage its own fields
-            GameEvents.OnAnimationGroupStateChanged.Add(SetModuleState);
 
             var postLoadField = typeof(USI_SwappableBay).GetField("_postLoad",
                 BindingFlags.NonPublic | BindingFlags.Instance);
@@ -366,14 +362,7 @@ namespace KreeglandIndustrialRepurposing
         public new void OnDestroy()
         {
             CancelInvoke(nameof(UpdateConverterUI));
-            GameEvents.OnAnimationGroupStateChanged.Remove(SetModuleState);
             base.OnDestroy();
-        }
-
-        private void SetModuleState(ModuleAnimationGroup module, bool enable)
-        {
-            if (module != null && module.part != part)
-                return;
         }
 
         public void UpdateConverterUI()
@@ -481,8 +470,8 @@ namespace KreeglandIndustrialRepurposing
                 return;
 
             int newIndex = GetCurrentSelectionIndex();
-            if (baseDisplayLoadoutField != null)
-                baseDisplayLoadoutField.SetValue(this, newIndex);
+            if (_baseDisplayLoadoutField != null)
+                _baseDisplayLoadoutField.SetValue(this, newIndex);
 
             ChangeMenu();
 
@@ -516,8 +505,8 @@ namespace KreeglandIndustrialRepurposing
             string oldTemplate = curTemplate;
             int newIndex = GetCurrentSelectionIndex();
 
-            if (baseDisplayLoadoutField != null)
-                baseDisplayLoadoutField.SetValue(this, newIndex);
+            if (_baseDisplayLoadoutField != null)
+                _baseDisplayLoadoutField.SetValue(this, newIndex);
             currentLoadout = newIndex;
 
             ApplyLoadout();
@@ -573,8 +562,8 @@ namespace KreeglandIndustrialRepurposing
             {
                 _kirPersistedConverterName = "";
                 currentLoadout = 0;
-                if (baseDisplayLoadoutField != null)
-                    baseDisplayLoadoutField.SetValue(this, 0);
+                if (_baseDisplayLoadoutField != null)
+                    _baseDisplayLoadoutField.SetValue(this, 0);
                 selectedConverterUI = "";
             }
 
@@ -619,8 +608,8 @@ namespace KreeglandIndustrialRepurposing
 
             currentLoadout = Mathf.Clamp(currentLoadout, 0, _filteredLoadouts.Count - 1);
             var loadout = _filteredLoadouts[currentLoadout];
-            if (baseDisplayLoadoutField != null)
-                baseDisplayLoadoutField.SetValue(this, currentLoadout);
+            if (_baseDisplayLoadoutField != null)
+                _baseDisplayLoadoutField.SetValue(this, currentLoadout);
 
             if (loadout == null || loadout.ConverterName == "_DISABLED_")
             {
@@ -730,16 +719,16 @@ namespace KreeglandIndustrialRepurposing
         /// </summary>
         private void SyncPersistentDisplayField()
         {
-            if (baseDisplayLoadoutField == null) return;
+            if (_baseDisplayLoadoutField == null) return;
 
-            int currentValue = (int)baseDisplayLoadoutField.GetValue(this);
+            int currentValue = (int)_baseDisplayLoadoutField.GetValue(this);
             int clampedValue = Mathf.Clamp(currentValue, 0, _filteredLoadouts?.Count - 1 ?? 0);
 
             if (currentValue != clampedValue)
-                baseDisplayLoadoutField.SetValue(this, clampedValue);
+                _baseDisplayLoadoutField.SetValue(this, clampedValue);
 
             if (clampedValue != currentLoadout)
-                baseDisplayLoadoutField.SetValue(this, currentLoadout);
+                _baseDisplayLoadoutField.SetValue(this, currentLoadout);
         }
 
         /// <summary>
@@ -803,8 +792,8 @@ namespace KreeglandIndustrialRepurposing
                 curTemplate = loadout.ConverterName;
                 KIR_DebugLogger.Log(string.Format("[KIR-EVA] curTemplate set to {0}", curTemplate));
                 _kirPersistedConverterName = curTemplate;
-                if (baseDisplayLoadoutField != null)
-                    baseDisplayLoadoutField.SetValue(this, currentLoadout);
+                if (_baseDisplayLoadoutField != null)
+                    _baseDisplayLoadoutField.SetValue(this, currentLoadout);
             }
         }
 
