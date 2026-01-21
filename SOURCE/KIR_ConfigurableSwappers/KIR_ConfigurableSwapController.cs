@@ -244,7 +244,7 @@ namespace KreeglandIndustrialRepurposing
             return filtered;
         }
 
-        private int[] _lastAppliedLoadoutIndex = new int[8];
+        private List<int> _lastAppliedLoadoutIndex = new List<int>();
         public new void ApplyLoadout(int loadoutIndex, int converterIndex)
         {
             ApplyLoadout(loadoutIndex, converterIndex, null);
@@ -252,6 +252,12 @@ namespace KreeglandIndustrialRepurposing
 
         public void ApplyLoadout(int loadoutIndex, int converterIndex, List<USI_Converter> converters)
         {
+            while (_lastAppliedLoadoutIndex.Count <= converterIndex)
+            {
+                KIR_DebugLogger.Log($"Expanding _lastAppliedLoadoutIndex from {_lastAppliedLoadoutIndex.Count} to {converterIndex + 1}");
+                _lastAppliedLoadoutIndex.Add(-1);
+            }
+
             if (_lastAppliedLoadoutIndex[converterIndex] == loadoutIndex)
             {
                 KIR_DebugLogger.Log(string.Format("Skipping duplicate ApplyLoadout for bay {0}, loadout {1}", converterIndex, loadoutIndex));
