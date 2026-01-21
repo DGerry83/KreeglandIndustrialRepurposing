@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="KIR_ConfigurableSwappers/KIR_ConfigurableSwappers.csproj" Id="825b4db3-a9a3-4944-87c7-8e88cbb35d9b" />
+  <Project Path="KIR_CoreHeatVisualizer/KIR_CoreHeatVisualizer.csproj" Id="9600f040-56c2-42d2-9f27-c545c1025f93" />
+  <Project Path="KIR_LS_Converters/KIR_LS_Converters.csproj" Id="1df5d0b8-4f57-441f-a087-317fabc50389" />
+  <Project Path="TexturesUnlimitedB9Bridge/TexturesUnlimitedB9Bridge.csproj" Id="6f602605-da9d-4a15-ab4c-5341986730a4" />
+</Solution>

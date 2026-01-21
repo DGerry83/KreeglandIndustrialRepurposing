@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{825B4DB3-A9A3-4944-87C7-8E88CBB35D9B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>KIR_ConfigurableSwappers</RootNamespace>
+    <AssemblyName>KIR_ConfigurableSwappers</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="KolonyTools">
+      <HintPath>..\..\..\..\..\..\..\SSDGames\KSPDEV\TINY\Kerbal Space Program\GameData\UmbraSpaceIndustries\MKS\KolonyTools.dll</HintPath>
+    </Reference>
+    <Reference Include="USITools">
+      <HintPath>..\..\..\..\..\..\..\SSDGames\KSPDEV\TINY\Kerbal Space Program\GameData\000_USITools\USITools.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="KIR_BulkConverterSwapOption.cs" />
+    <Compile Include="KIR_ConfigurableSwapController.cs" />
+    <Compile Include="KIR_ConfigurableSwappableBay.cs" />
+    <Compile Include="KIR_Converter.cs" />
+    <Compile Include="KIR_ConverterSwapOption.cs" />
+    <Compile Include="KIR_LifeSupportConverterSwapOption.cs" />
+    <Compile Include="KIR_StackTracer.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="KSPBuildTools">
+      <Version>1.1.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetPath)" "D:\KSP Coding\CustomKSPMats\KreeglandIndustrialRepurposing\Plugins\$(TargetFileName)"</PostBuildEvent>
+  </PropertyGroup>
+</Project>
