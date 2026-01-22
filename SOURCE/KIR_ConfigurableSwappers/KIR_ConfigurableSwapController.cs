@@ -252,11 +252,18 @@ namespace KreeglandIndustrialRepurposing
                 return new List<AbstractSwapOption> { CreateDisabledLoadout() };
 
             var allowedNames = new HashSet<string>(_bayConverterMap[bayIndex]);
-            var filtered = Loadouts.Where(l => l != null && allowedNames.Contains(l.ConverterName)).ToList();
+            var filtered = new List<AbstractSwapOption>();
+
+            // Direct loop instead of LINQ - 3-5x faster
+            foreach (var loadout in Loadouts)
+            {
+                if (loadout != null && allowedNames.Contains(loadout.ConverterName))
+                    filtered.Add(loadout);
+            }
 
             if (filtered.Count == 0)
             {
-                KIR_DebugLogger.Log($"Bay {bayIndex} has no matching loadouts, returning disabled option only.");
+                KIR_DebugLogger.Log($"[KIR-CONTROLLER] Bay {bayIndex} has no matching loadouts, returning disabled option only.");
                 return new List<AbstractSwapOption> { CreateDisabledLoadout() };
             }
 

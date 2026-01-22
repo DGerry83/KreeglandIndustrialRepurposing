@@ -16,6 +16,16 @@ namespace KreeglandIndustrialRepurposing
         private bool _bayInitialized = false;
 
         /// <summary>
+        /// Cached list of KIR_Converter modules to avoid repeated FindModulesImplementing calls
+        /// </summary>
+        private List<KIR_Converter> _cachedConverters;
+
+        /// <summary>
+        /// Tracks part module count to detect when cache needs refresh
+        /// </summary>
+        private int _cachedConverterCount = -1;
+
+        /// <summary>
         /// Static cache for FieldInfo objects to avoid repeated reflection lookups.
         /// Key: "TypeFullName.FieldName" 
         /// </summary>
@@ -50,7 +60,7 @@ namespace KreeglandIndustrialRepurposing
         [KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "Start Converter", active = true)]
         public void StartConverter()
         {
-            var converters = part.FindModulesImplementing<KIR_Converter>();
+            var converters = GetCachedConverters();
             if (moduleIndex < converters.Count && !_isDisabled)
             {
                 var converter = converters[moduleIndex];
@@ -63,7 +73,7 @@ namespace KreeglandIndustrialRepurposing
         [KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "Stop Converter", active = false)]
         public void StopConverter()
         {
-            var converters = part.FindModulesImplementing<KIR_Converter>();
+            var converters = GetCachedConverters();
             if (moduleIndex < converters.Count && !_isDisabled)
             {
                 var converter = converters[moduleIndex];
@@ -342,6 +352,22 @@ namespace KreeglandIndustrialRepurposing
 
             KIR_DebugLogger.Log(string.Format("{0} LoadSetup completed successfully", KIR_Constants.DEBUG_EVA_PREFIX));
         }
+        /// <summary>
+        /// Gets cached converter list or rebuilds if part modules changed
+        /// </summary>
+        private List<KIR_Converter> GetCachedConverters()
+        {
+            if (_cachedConverters == null || _cachedConverterCount != part.Modules.Count)
+            {
+                _cachedConverters = part.FindModulesImplementing<KIR_Converter>();
+                _cachedConverterCount = part.Modules.Count;
+
+#if DEBUG
+                KIR_DebugLogger.Log($"[KIR-PERF] Re-cached {_cachedConverters.Count} converters for bay {bayName}");
+#endif
+            }
+            return _cachedConverters;
+        }
 
         [KSPField(isPersistant = true)]
         private string _kirPersistedConverterName = "";
@@ -464,7 +490,7 @@ namespace KreeglandIndustrialRepurposing
         {
             ProfileMethod(nameof(UpdateConverterUI), () =>
             {
-                var converters = part.FindModulesImplementing<KIR_Converter>();
+                var converters = GetCachedConverters(); // <-- Use cache instead of direct call
                 if (moduleIndex >= converters.Count || _isDisabled)
                 {
                     Fields["converterStatus"].guiActive = false;
@@ -482,7 +508,7 @@ namespace KreeglandIndustrialRepurposing
 
         private void UpdateConverterButtons()
         {
-            var converters = part.FindModulesImplementing<KIR_Converter>();
+            var converters = GetCachedConverters();
             if (moduleIndex >= converters.Count || _isDisabled)
             {
                 Events["StartConverter"].active = false;
