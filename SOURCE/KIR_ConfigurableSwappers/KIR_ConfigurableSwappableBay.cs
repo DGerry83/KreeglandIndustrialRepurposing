@@ -54,8 +54,19 @@ namespace KreeglandIndustrialRepurposing
         [KSPEvent(guiActive = false, guiActiveEditor = false, guiName = "B1: Next Loadout", active = false, guiActiveUnfocused = true, externalToEVAOnly = true, unfocusedRange = 10f)]
         public void KIR_NextSetup()
         {
-            if (!CheckResourcesCustom())
-                return;
+            // Only check skill for preview navigation, not resources
+            if (USI_ConverterOptions.ConverterSwapRequiresRepairSkillEnabled)
+            {
+                var (skillOk, skillMsg) = KIR_ResourceValidator.ValidateRepairSkill(
+                    FlightGlobals.ActiveVessel,
+                    USI_ConverterOptions.ConverterSwapRequiresEVAEnabled);
+
+                if (!skillOk)
+                {
+                    ScreenMessages.PostScreenMessage(skillMsg, 5f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                }
+            }
             if (_filteredLoadouts == null || _filteredLoadouts.Count < 2)
                 return;
 
@@ -99,8 +110,19 @@ namespace KreeglandIndustrialRepurposing
         [KSPEvent(guiActive = false, guiActiveEditor = false, guiName = "B1: Prev. Loadout", active = false, guiActiveUnfocused = true, externalToEVAOnly = true, unfocusedRange = 10f)]
         public void KIR_PrevSetup()
         {
-            if (!CheckResourcesCustom())
-                return;
+            // Only check skill for preview navigation, not resources
+            if (USI_ConverterOptions.ConverterSwapRequiresRepairSkillEnabled)
+            {
+                var (skillOk, skillMsg) = KIR_ResourceValidator.ValidateRepairSkill(
+                    FlightGlobals.ActiveVessel,
+                    USI_ConverterOptions.ConverterSwapRequiresEVAEnabled);
+
+                if (!skillOk)
+                {
+                    ScreenMessages.PostScreenMessage(skillMsg, 5f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                }
+            }
             if (_filteredLoadouts == null || _filteredLoadouts.Count < 2)
                 return;
 
@@ -175,7 +197,8 @@ namespace KreeglandIndustrialRepurposing
 
             if (!_bayInitialized || _isDisabled)
             {
-                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: _bayInitialized={1}, _isDisabled={2}", KIR_Constants.DEBUG_EVA_PREFIX, _bayInitialized, _isDisabled));
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: _bayInitialized={1}, _isDisabled={2}",
+                    KIR_Constants.DEBUG_EVA_PREFIX, _bayInitialized, _isDisabled));
                 return false;
             }
 
@@ -185,12 +208,7 @@ namespace KreeglandIndustrialRepurposing
                 return false;
             }
 
-            if (!CheckResourcesCustom())
-            {
-                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: resource check failed", KIR_Constants.DEBUG_EVA_PREFIX));
-                return false;
-            }
-
+            var vessel = FlightGlobals.ActiveVessel;
             var controller = GetKirController();
             if (controller == null)
             {
@@ -198,12 +216,38 @@ namespace KreeglandIndustrialRepurposing
                 return false;
             }
 
-            var converters = part.FindModulesImplementing<USI_Converter>();
-            if (converters.Count == 0)
+            // Check both skill and resources for actual installation
+            if (USI_ConverterOptions.ConverterSwapRequiresRepairSkillEnabled)
             {
-                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: no converters", KIR_Constants.DEBUG_EVA_PREFIX));
+                var (skillOk, skillMsg) = KIR_ResourceValidator.ValidateRepairSkill(
+                    vessel,
+                    USI_ConverterOptions.ConverterSwapRequiresEVAEnabled);
+
+                if (!skillOk)
+                {
+                    ScreenMessages.PostScreenMessage(skillMsg, 5f, ScreenMessageStyle.UPPER_CENTER);
+                    KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: skill check failed", KIR_Constants.DEBUG_EVA_PREFIX));
+                    return false;
+                }
+            }
+
+            var (resourcesOk, resourceMsg) = KIR_ResourceValidator.ValidateResources(
+                vessel,
+                controller.SwapCosts,
+                part);
+
+            if (!resourcesOk)
+            {
+                ScreenMessages.PostScreenMessage(resourceMsg, 5f, ScreenMessageStyle.UPPER_CENTER);
+                KIR_DebugLogger.Log(string.Format("{0} LoadSetup aborted: resource check failed", KIR_Constants.DEBUG_EVA_PREFIX));
                 return false;
             }
+
+            // Deduct resources after successful validation
+            KIR_ResourceValidator.DeductResources(
+                FlightGlobals.ActiveVessel,
+                controller.SwapCosts,
+                part);
 
             KIR_DebugLogger.Log(string.Format("{0} LoadSetup preflight check PASSED", KIR_Constants.DEBUG_EVA_PREFIX));
             return true;
@@ -296,7 +340,7 @@ namespace KreeglandIndustrialRepurposing
             postLoadField?.SetValue(this, true);
             _bayInitialized = true;
 
-            // Fetch controller fresh for persistence restore
+            // Simple restoration - happens after controller loads naturally
             var controller = GetKirController();
             if (!string.IsNullOrEmpty(_kirPersistedConverterName) && controller != null)
             {
@@ -317,6 +361,18 @@ namespace KreeglandIndustrialRepurposing
 
             if (HighLogic.LoadedSceneIsFlight)
                 InvokeRepeating(nameof(UpdateConverterUI), 0f, 0.5f);
+        }
+
+        private System.Collections.IEnumerator RestoreAfterLoad()
+        {
+            yield return null; // Wait for KSP field loading
+
+            var controller = GetKirController();
+            if (!string.IsNullOrEmpty(_kirPersistedConverterName) && controller != null)
+            {
+                KIR_DebugLogger.Log($"RestoreAfterLoad: Found persisted '{_kirPersistedConverterName}'");
+                RefreshFilteredLoadouts(controller);
+            }
         }
 
         private void DisableUSIBaseEvents()
@@ -344,11 +400,6 @@ namespace KreeglandIndustrialRepurposing
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
-
-            if (node.HasValue("_kirPersistedConverterName"))
-            {
-                _kirPersistedConverterName = node.GetValue("_kirPersistedConverterName");
-            }
         }
 
         public override void OnSave(ConfigNode node)
@@ -420,7 +471,7 @@ namespace KreeglandIndustrialRepurposing
             {
                 string name = _filteredLoadouts[i].ConverterName;
                 optionValues[i] = name;
-                displayNames[i] = name == "_DISABLED_" ? "Disabled" : name;
+                displayNames[i] = name == KIR_Constants.DISABLED_LOADOUT_NAME ? "Disabled" : name;
             }
 
             UI_ChooseOption widget = null;
@@ -497,20 +548,51 @@ namespace KreeglandIndustrialRepurposing
 
         private void LoadSetupCustom()
         {
-            if (!CheckResourcesCustom())
+            // EDITOR MODE: Skip validation, apply immediately and persist
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                string oldTemplate = curTemplate;
+                int newIndex = GetCurrentSelectionIndex();
+
+                if (_baseDisplayLoadoutField != null)
+                    _baseDisplayLoadoutField.SetValue(this, newIndex);
+                currentLoadout = newIndex;
+
+                // Update persistence immediately
+                if (_filteredLoadouts != null && newIndex >= 0 && newIndex < _filteredLoadouts.Count)
+                {
+                    _kirPersistedConverterName = _filteredLoadouts[newIndex].ConverterName;
+                    selectedConverterUI = _kirPersistedConverterName;
+                    KIR_DebugLogger.Log(string.Format("{0} LoadSetupCustom: Persisted '{1}' (editor)",
+                        KIR_Constants.DEBUG_EVA_PREFIX, _kirPersistedConverterName));
+                }
+
+                ApplyLoadout();
+
+                ScreenMessages.PostScreenMessage(
+                    string.Format("Reconfigured from {0} to {1}", oldTemplate, curTemplate),
+                    5f, ScreenMessageStyle.UPPER_CENTER);
+
+                SyncSelectionUI();
+                ChangeMenu();
+                return;
+            }
+
+            // FLIGHT MODE: Full validation required
+            if (!ValidateLoadSetupPreconditions())
                 return;
 
-            string oldTemplate = curTemplate;
-            int newIndex = GetCurrentSelectionIndex();
+            string oldTemplateFlight = curTemplate;
+            int newIndexFlight = GetCurrentSelectionIndex();
 
             if (_baseDisplayLoadoutField != null)
-                _baseDisplayLoadoutField.SetValue(this, newIndex);
-            currentLoadout = newIndex;
+                _baseDisplayLoadoutField.SetValue(this, newIndexFlight);
+            currentLoadout = newIndexFlight;
 
             ApplyLoadout();
 
             ScreenMessages.PostScreenMessage(
-                string.Format("Reconfiguration from {0} to {1} completed.", oldTemplate, curTemplate),
+                string.Format("Reconfiguration from {0} to {1} completed.", oldTemplateFlight, curTemplate),
                 5f, ScreenMessageStyle.UPPER_CENTER);
 
             SyncSelectionUI();
@@ -530,11 +612,8 @@ namespace KreeglandIndustrialRepurposing
             if (controller == null)
                 controller = GetKirController();
 
-            KIR_DebugLogger.Log(string.Format("{0} RefreshFilteredLoadouts controller={1}", KIR_Constants.DEBUG_EVA_PREFIX, controller != null));
-
             if (controller == null)
             {
-                Debug.LogWarning(string.Format("{0} Bay{1} cannot find controller", KIR_Constants.DEBUG_LOG_PREFIX, moduleIndex));
                 SetupDisabledBay();
                 return;
             }
@@ -543,40 +622,35 @@ namespace KreeglandIndustrialRepurposing
             _filteredLoadouts = newFilteredLoadouts ?? new List<AbstractSwapOption>();
             _isDisabled = _filteredLoadouts.Count == 1 && _filteredLoadouts[0] is DisabledSwapOption;
 
-            bool isPersistedValid = false;
+            // Just restore the UI state - don't call ApplyLoadout here
             if (!string.IsNullOrEmpty(_kirPersistedConverterName))
             {
-                foreach (var loadout in _filteredLoadouts)
+                int restoredIndex = -1;
+                for (int i = 0; i < _filteredLoadouts.Count; i++)
                 {
-                    if (loadout.ConverterName == _kirPersistedConverterName)
+                    if (_filteredLoadouts[i].ConverterName == _kirPersistedConverterName)
                     {
-                        isPersistedValid = true;
+                        restoredIndex = i;
                         break;
                     }
                 }
-            }
 
-            if (!isPersistedValid)
-            {
-                _kirPersistedConverterName = "";
-                currentLoadout = 0;
-                if (_baseDisplayLoadoutField != null)
-                    _baseDisplayLoadoutField.SetValue(this, 0);
-                selectedConverterUI = "";
+                if (restoredIndex >= 0)
+                {
+                    currentLoadout = restoredIndex;
+                    selectedConverterUI = _kirPersistedConverterName;
+                    KIR_DebugLogger.Log($"RefreshFilteredLoadouts: Restored '{_kirPersistedConverterName}'");
+                }
+                else
+                {
+                    _kirPersistedConverterName = "";
+                    currentLoadout = 0;
+                    selectedConverterUI = "";
+                }
             }
 
             ChangeMenu();
-
-            if (_isDisabled || _filteredLoadouts.Count == 0)
-            {
-                SetupDisabledBay();
-                return;
-            }
-
-            InitializeSelectionUI();
-            SyncSelectionUI();
             SetupEnabledBay();
-            KIR_DebugLogger.Log(string.Format("{0} RefreshFilteredLoadouts complete: _isDisabled={1}, count={2}", KIR_Constants.DEBUG_EVA_PREFIX, _isDisabled, _filteredLoadouts.Count));
         }
 
         private void SetupDisabledBay()
@@ -818,101 +892,6 @@ namespace KreeglandIndustrialRepurposing
             }
             KIR_DebugLogger.Log(string.Format("{0} for loop failed, returning -1", KIR_Constants.DEBUG_EVA_PREFIX));
             return -1;
-        }
-
-        private bool CheckResourcesCustom()
-        {
-            KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom started", KIR_Constants.DEBUG_EVA_PREFIX));
-
-            if (HighLogic.LoadedSceneIsEditor) return true;
-
-            // Repair skill check
-            if (USI_ConverterOptions.ConverterSwapRequiresRepairSkillEnabled)
-            {
-                bool foundRepairSkill = false;
-
-                if (USI_ConverterOptions.ConverterSwapRequiresEVAEnabled)
-                {
-                    var kerbal = FlightGlobals.ActiveVessel.rootPart.protoModuleCrew[0];
-                    if (kerbal?.HasEffect("RepairSkill") == true)
-                        foundRepairSkill = true;
-                }
-                else
-                {
-                    var crew = FlightGlobals.ActiveVessel.GetVesselCrew();
-                    foreach (var kerbal in crew)
-                    {
-                        if (kerbal.HasEffect("RepairSkill"))
-                        {
-                            foundRepairSkill = true;
-                            break;
-                        }
-                    }
-                }
-
-                KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom skill check result: {1}", KIR_Constants.DEBUG_EVA_PREFIX, foundRepairSkill));
-
-                if (!foundRepairSkill)
-                {
-                    ScreenMessages.PostScreenMessage("Repair skill required!", 5f, ScreenMessageStyle.UPPER_CENTER);
-                    return false;
-                }
-            }
-
-            float costMultiplier = USI_ConverterOptions.ConverterSwapCostMultiplierValue;
-            KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom costMultiplier: {1}", KIR_Constants.DEBUG_EVA_PREFIX, costMultiplier));
-
-            if (costMultiplier > ResourceUtilities.FLOAT_TOLERANCE)
-            {
-                var controller = GetKirController();
-                if (controller == null)
-                {
-                    KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom early exit: no controller", KIR_Constants.DEBUG_EVA_PREFIX));
-                    return true;
-                }
-
-                foreach (var resource in controller.SwapCosts)
-                {
-                    if (!HasResourceCustom(resource))
-                    {
-                        KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom failed: missing {1}", KIR_Constants.DEBUG_EVA_PREFIX, resource.ResourceName));
-                        return false;
-                    }
-                }
-                KIR_DebugLogger.Log(string.Format("{0} CheckResourcesCustom all resources present", KIR_Constants.DEBUG_EVA_PREFIX));
-            }
-            return true;
-        }
-
-        private bool HasResourceCustom(ResourceRatio resInfo)
-        {
-            var costMultiplier = USI_ConverterOptions.ConverterSwapCostMultiplierValue;
-            if (costMultiplier <= ResourceUtilities.FLOAT_TOLERANCE) return true;
-
-            var needed = resInfo.Ratio * costMultiplier;
-            var whpList = LogisticsTools.GetRegionalWarehouses(vessel, "USI_ModuleResourceWarehouse");
-
-            if (resInfo.ResourceName == "ElectricCharge")
-                whpList.AddRange(part.vessel.parts);
-
-            foreach (var whp in whpList)
-            {
-                if (whp == part) continue;
-
-                if (resInfo.ResourceName != "ElectricCharge")
-                {
-                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
-                    if (wh != null && !wh.localTransferEnabled) continue;
-                }
-
-                if (whp.Resources.Contains(resInfo.ResourceName))
-                {
-                    var res = whp.Resources[resInfo.ResourceName];
-                    if (res.amount >= needed) return true;
-                    needed -= res.amount;
-                }
-            }
-            return needed < ResourceUtilities.FLOAT_TOLERANCE;
         }
     }
 }

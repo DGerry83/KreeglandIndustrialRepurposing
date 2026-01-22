@@ -62,6 +62,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "D:\KSP Coding\CustomKSPMats\KreeglandIndustrialRepurposing\Plugins\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "D:\KSP Coding\CustomKSPMats\KreeglandIndustrialRepurposing\Plugins\$(TargetFileName)"
+copy "$(TargetPath)" "C:\SSDGames\KSPReleaseTest\GameData\KreeglandIndustrialRepurposing\Plugins\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
 </Project>

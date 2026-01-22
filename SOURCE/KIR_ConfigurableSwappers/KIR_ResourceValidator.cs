@@ -6,42 +6,39 @@ using USITools.Helpers;
 
 namespace KreeglandIndustrialRepurposing
 {
-    /// <summary>
-    /// Static helper class for resource validation and management
-    /// Centralizes EVA skill checking and resource deduction logic
-    /// </summary>
     public static class KIR_ResourceValidator
     {
         /// <summary>
-        /// Checks if the current vessel has a kerbal with Repair skill
+        /// Validates repair skill requirement and returns appropriate message
         /// </summary>
-        /// <param name="vessel">Target vessel</param>
-        /// <param name="requireEva">If true, only checks active EVA kerbal</param>
-        /// <returns>True if repair skill is present</returns>
-        public static bool HasRepairSkill(Vessel vessel, bool requireEva = true)
+        public static (bool success, string message) ValidateRepairSkill(Vessel vessel, bool requireEva)
         {
             if (vessel == null)
-                return false;
+                return (false, "No vessel available");
 
-            if (requireEva)
+            bool hasSkill = requireEva
+                ? vessel.rootPart?.protoModuleCrew?.FirstOrDefault()?.HasEffect("RepairSkill") == true
+                : vessel.GetVesselCrew().Any(k => k.HasEffect("RepairSkill"));
+
+            if (!hasSkill)
             {
-                var evaKerbal = vessel.rootPart?.protoModuleCrew?.FirstOrDefault();
-                return evaKerbal?.HasEffect("RepairSkill") == true;
+                return (false, GetSkillFailMessage(requireEva));
             }
-            else
-            {
-                return vessel.GetVesselCrew().Any(k => k.HasEffect("RepairSkill"));
-            }
+
+            return (true, string.Empty);
+        }
+
+        private static string GetSkillFailMessage(bool requireEva)
+        {
+            return requireEva
+                ? "Only Kerbals with repair skills (e.g. engineers, mechanics) can reconfigure modules!"
+                : "A Kerbal with repair skills (e.g. engineer, mechanic) must be on board to reconfigure modules!";
         }
 
         /// <summary>
-        /// Validates that all required resources are available for converter swap
+        /// Validates resource requirements and returns detailed missing resources message
         /// </summary>
-        /// <param name="vessel">Target vessel</param>
-        /// <param name="swapCosts">List of resource costs</param>
-        /// <param name="excludedPart">Part to exclude from resource search (typically the converter part itself)</param>
-        /// <returns>Tuple of (bool success, string missingResourcesMessage)</returns>
-        public static (bool success, string missingMessage) HasRequiredResources(
+        public static (bool success, string message) ValidateResources(
             Vessel vessel,
             List<ResourceRatio> swapCosts,
             Part excludedPart)
@@ -54,31 +51,26 @@ namespace KreeglandIndustrialRepurposing
                 return (true, string.Empty);
 
             var missingResources = new List<string>();
-
             foreach (var resource in swapCosts)
             {
-                if (!HasSufficientResource(vessel, resource, costMultiplier, excludedPart))
+                double needed = resource.Ratio * costMultiplier;
+                if (!HasSufficientResource(vessel, resource.ResourceName, needed, excludedPart))
                 {
-                    double neededAmount = resource.Ratio * costMultiplier;
-                    missingResources.Add($"\n{neededAmount:F2} {resource.ResourceName}");
+                    missingResources.Add($"\n{needed:F2} {resource.ResourceName}");
                 }
             }
 
             if (missingResources.Any())
             {
-                string message = "Missing resources to change module:" + string.Join("", missingResources);
-                return (false, message);
+                return (false, "Missing resources to change module:" + string.Join("", missingResources));
             }
 
             return (true, string.Empty);
         }
 
         /// <summary>
-        /// Deducts resources from vessel storage after successful validation
+        /// Deducts resources after successful validation
         /// </summary>
-        /// <param name="vessel">Target vessel</param>
-        /// <param name="swapCosts">List of resource costs</param>
-        /// <param name="excludedPart">Part to exclude from deduction</param>
         public static void DeductResources(
             Vessel vessel,
             List<ResourceRatio> swapCosts,
@@ -98,47 +90,22 @@ namespace KreeglandIndustrialRepurposing
             }
         }
 
-        #region Private Helpers
-
         private static bool HasSufficientResource(
             Vessel vessel,
-            ResourceRatio resInfo,
-            float costMultiplier,
+            string resourceName,
+            double needed,
             Part excludedPart)
         {
-            double needed = resInfo.Ratio * costMultiplier;
             var whpList = LogisticsTools.GetRegionalWarehouses(vessel, "USI_ModuleResourceWarehouse");
-
-            // Include vessel parts for ElectricCharge
-            if (resInfo.ResourceName == "ElectricCharge")
-            {
+            if (resourceName == "ElectricCharge")
                 whpList.AddRange(vessel.parts);
-            }
 
-            foreach (var whp in whpList)
-            {
-                if (whp == excludedPart)
-                    continue;
-
-                // Skip non-warehouse parts for non-EC resources
-                if (resInfo.ResourceName != "ElectricCharge")
-                {
-                    var wh = whp.FindModuleImplementing<USITools.USI_ModuleResourceWarehouse>();
-                    if (wh != null && !wh.localTransferEnabled)
-                        continue;
-                }
-
-                if (whp.Resources.Contains(resInfo.ResourceName))
-                {
-                    var res = whp.Resources[resInfo.ResourceName];
-                    if (res.amount >= needed)
-                        return true;
-
-                    needed -= res.amount;
-                }
-            }
-
-            return needed < ResourceUtilities.FLOAT_TOLERANCE;
+            return whpList
+                .Where(whp => whp != excludedPart)
+                .Where(whp => resourceName == "ElectricCharge" ||
+                    whp.FindModuleImplementing<USITools.USI_ModuleResourceWarehouse>()?.localTransferEnabled != false)
+                .Where(whp => whp.Resources.Contains(resourceName))
+                .Sum(whp => whp.Resources[resourceName].amount) >= needed;
         }
 
         private static void DeductResourceFromVessel(
@@ -151,30 +118,20 @@ namespace KreeglandIndustrialRepurposing
 
             foreach (var whp in whpList)
             {
-                if (whp == excludedPart)
-                    continue;
+                if (whp == excludedPart) continue;
 
                 var wh = whp.FindModuleImplementing<USITools.USI_ModuleResourceWarehouse>();
-                if (wh != null && !wh.localTransferEnabled)
-                    continue;
+                if (wh != null && !wh.localTransferEnabled) continue;
 
                 if (whp.Resources.Contains(resourceName))
                 {
                     var res = whp.Resources[resourceName];
-                    if (res.amount >= needed)
-                    {
-                        res.amount -= needed;
-                        return;
-                    }
-                    else
-                    {
-                        needed -= res.amount;
-                        res.amount = 0;
-                    }
+                    double taken = Mathf.Min((float)res.amount, (float)needed);
+                    res.amount -= taken;
+                    needed -= taken;
+                    if (needed <= ResourceUtilities.FLOAT_TOLERANCE) return;
                 }
             }
         }
-
-        #endregion
     }
 }

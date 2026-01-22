@@ -104,10 +104,9 @@ namespace KreeglandIndustrialRepurposing
         {
             base.OnLoad(node);
 
-            if (ParseBayConfiguration())
-            {
-                KIR_DebugLogger.Log($"Controller OnLoad - Parsed config: '{AvailableConvertersPerBay}'");
-            }
+            // CRITICAL: Always parse config during load, before bays try to restore
+            ParseBayConfiguration();
+            KIR_DebugLogger.Log($"Controller OnLoad - Parsed config: '{AvailableConvertersPerBay}'");
         }
 
         private void ApplyModuleCoreHeatProperties()
