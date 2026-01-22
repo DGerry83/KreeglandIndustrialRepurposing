@@ -140,7 +140,6 @@ namespace KreeglandIndustrialRepurposing
             }
 
             KIR_DebugLogger.Log($"Applying properties to ModuleCoreHeat on {part.name}");
-            KIR_DebugLogger.Log($"BEFORE - CoreTempGoal: {_cachedCoreHeat.CoreTempGoal:F1}, CoreTemperature: {_cachedCoreHeat.CoreTemperature:F1} (NaN={double.IsNaN(_cachedCoreHeat.CoreTemperature)})");
 
             // Set all thermal properties
             SetCoreHeatField("CoreTempGoal", CoreTempGoal);
@@ -157,21 +156,7 @@ namespace KreeglandIndustrialRepurposing
             SetCoreHeatField("CoreShutdownTemp", CoreShutdownTemp);
             SetCoreHeatField("MaxCoolant", MaxCoolant);
 
-            // FIX #1: Prime the thermal system if needed
-            if (double.IsNaN(_cachedCoreHeat.CoreTemperature))
-            {
-                var checkTempMethod = typeof(ModuleCoreHeat).GetMethod("CheckStartingTemperature",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-
-                if (checkTempMethod != null)
-                {
-                    checkTempMethod.Invoke(_cachedCoreHeat, null);
-                    Debug.LogError($"{KIR_Constants.DEBUG_HEAT_PREFIX}FIXED: Primed CoreTemperature to {_cachedCoreHeat.CoreTempGoal:F1}K");
-                }
-            }
-
-            // FIX #2: CRITICAL - Force ModuleCoreHeat to update its converter cache
-            // This is why heat generation fails! The cache was built before our converters existed.
+            // CRITICAL - Force ModuleCoreHeat to update its converter cache
             var updateCacheMethod = GetCachedMethodInfo(typeof(ModuleCoreHeat),
     "UpdateConverterModuleCache", BindingFlags.Public | BindingFlags.Instance);
 

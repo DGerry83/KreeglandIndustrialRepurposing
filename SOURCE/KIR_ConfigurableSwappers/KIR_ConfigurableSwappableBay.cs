@@ -14,6 +14,7 @@ namespace KreeglandIndustrialRepurposing
         private List<AbstractSwapOption> _filteredLoadouts;
         private bool _isDisabled = false;
         private bool _bayInitialized = false;
+        private bool _cacheInitialized = false;
 
         /// <summary>
         /// Cached list of KIR_Converter modules to avoid repeated FindModulesImplementing calls
@@ -357,14 +358,13 @@ namespace KreeglandIndustrialRepurposing
         /// </summary>
         private List<KIR_Converter> GetCachedConverters()
         {
-            if (_cachedConverters == null || _cachedConverterCount != part.Modules.Count)
+            if (!_cacheInitialized || _cachedConverters == null || (_cachedConverterCount != part.Modules.Count && _cachedConverterCount > 0))
             {
                 _cachedConverters = part.FindModulesImplementing<KIR_Converter>();
                 _cachedConverterCount = part.Modules.Count;
+                _cacheInitialized = true;
 
-#if DEBUG
                 KIR_DebugLogger.Log($"[KIR-PERF] Re-cached {_cachedConverters.Count} converters for bay {bayName}");
-#endif
             }
             return _cachedConverters;
         }
@@ -386,6 +386,10 @@ namespace KreeglandIndustrialRepurposing
         {
             base.OnStart(state);
             DisableUSIBaseEvents();
+
+            _cacheInitialized = false;
+            _cachedConverters = null;
+            _cachedConverterCount = -1;
 
             // DECLARE postLoadField HERE - use cached reflection
             var postLoadField = GetCachedFieldInfo(typeof(USI_SwappableBay), "_postLoad",

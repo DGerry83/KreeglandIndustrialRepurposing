@@ -76,7 +76,7 @@ namespace KreeglandIndustrialRepurposing
 
             if (TemperatureModifierCurve == null)
             {
-                UnityEngine.Debug.LogError($"[KIR-CURVE] CRITICAL: TemperatureModifierCurve failed to load for '{ConverterName}'!");
+                UnityEngine.Debug.LogWarning($"[KIR-CURVE] TemperatureModifierCurve failed to load for '{ConverterName}', check the part config.");
             }
         }
 
