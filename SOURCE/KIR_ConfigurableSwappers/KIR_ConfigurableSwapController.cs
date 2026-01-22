@@ -56,7 +56,27 @@ namespace KreeglandIndustrialRepurposing
 
         private Dictionary<int, List<string>> _bayConverterMap = new Dictionary<int, List<string>>();
         private string _lastConfig = "";
-        private ModuleCoreHeat _cachedCoreHeat;
+        public ModuleCoreHeat _cachedCoreHeat;
+
+        private static readonly Dictionary<string, MethodInfo> _methodInfoCache =
+    new Dictionary<string, MethodInfo>();
+
+        private static MethodInfo GetCachedMethodInfo(Type type, string methodName, BindingFlags flags)
+        {
+            string cacheKey = $"{type.FullName}.{methodName}";
+
+            if (!_methodInfoCache.TryGetValue(cacheKey, out var methodInfo))
+            {
+                methodInfo = type.GetMethod(methodName, flags);
+                _methodInfoCache[cacheKey] = methodInfo;
+
+#if DEBUG
+                KIR_DebugLogger.Log($"[KIR-REFLECT] Cached MethodInfo for {cacheKey}");
+#endif
+            }
+
+            return methodInfo;
+        }
 
         private DisabledSwapOption CreateDisabledLoadout()
         {
@@ -152,8 +172,8 @@ namespace KreeglandIndustrialRepurposing
 
             // FIX #2: CRITICAL - Force ModuleCoreHeat to update its converter cache
             // This is why heat generation fails! The cache was built before our converters existed.
-            var updateCacheMethod = typeof(ModuleCoreHeat).GetMethod("UpdateConverterModuleCache",
-                BindingFlags.Public | BindingFlags.Instance);
+            var updateCacheMethod = GetCachedMethodInfo(typeof(ModuleCoreHeat),
+    "UpdateConverterModuleCache", BindingFlags.Public | BindingFlags.Instance);
 
             if (updateCacheMethod != null)
             {

@@ -50,6 +50,7 @@
     <Compile Include="KIR_Constants.cs" />
     <Compile Include="KIR_Converter.cs" />
     <Compile Include="KIR_ConverterSwapOption.cs" />
+    <Compile Include="KIR_CurveManager.cs" />
     <Compile Include="KIR_LifeSupportConverterSwapOption.cs" />
     <Compile Include="KIR_ResourceValidator.cs" />
     <Compile Include="KIR_StackTracer.cs" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -13,6 +14,32 @@ namespace KreeglandIndustrialRepurposing
         private List<AbstractSwapOption> _filteredLoadouts;
         private bool _isDisabled = false;
         private bool _bayInitialized = false;
+
+        /// <summary>
+        /// Static cache for FieldInfo objects to avoid repeated reflection lookups.
+        /// Key: "TypeFullName.FieldName" 
+        /// </summary>
+        private static readonly Dictionary<string, FieldInfo> _fieldInfoCache =
+            new Dictionary<string, FieldInfo>();
+        /// <summary>
+        /// Gets cached FieldInfo or performs reflection lookup if not cached.
+        /// </summary>
+        private static FieldInfo GetCachedFieldInfo(Type type, string fieldName, BindingFlags flags)
+        {
+            string cacheKey = $"{type.FullName}.{fieldName}";
+
+            if (!_fieldInfoCache.TryGetValue(cacheKey, out var fieldInfo))
+            {
+                fieldInfo = type.GetField(fieldName, flags);
+                _fieldInfoCache[cacheKey] = fieldInfo; // Cache even if null
+
+#if DEBUG
+                KIR_DebugLogger.Log($"[KIR-REFLECT] Cached FieldInfo for {cacheKey}");
+#endif
+            }
+
+            return fieldInfo;
+        }
 
         [KSPField(guiActive = false, guiActiveEditor = false, guiName = "Status")]
         public string converterStatus = "Inactive";
@@ -320,8 +347,7 @@ namespace KreeglandIndustrialRepurposing
         private string _kirPersistedConverterName = "";
 
         private static readonly FieldInfo _baseDisplayLoadoutField =
-            typeof(USI_SwappableBay).GetField("displayLoadout",
-                BindingFlags.NonPublic | BindingFlags.Instance);
+            GetCachedFieldInfo(typeof(USI_SwappableBay), "displayLoadout", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private KIR_ConfigurableSwapController GetKirController()
         {
@@ -335,10 +361,15 @@ namespace KreeglandIndustrialRepurposing
             base.OnStart(state);
             DisableUSIBaseEvents();
 
-            var postLoadField = typeof(USI_SwappableBay).GetField("_postLoad",
+            // DECLARE postLoadField HERE - use cached reflection
+            var postLoadField = GetCachedFieldInfo(typeof(USI_SwappableBay), "_postLoad",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             postLoadField?.SetValue(this, true);
+
             _bayInitialized = true;
+
+            // Add the coroutine for ModuleCoreHeat timing fix
+            StartCoroutine(EnsureCacheRebuildAfterConverters());
 
             // Simple restoration - happens after controller loads naturally
             var controller = GetKirController();
@@ -363,15 +394,30 @@ namespace KreeglandIndustrialRepurposing
                 InvokeRepeating(nameof(UpdateConverterUI), 0f, 0.5f);
         }
 
-        private System.Collections.IEnumerator RestoreAfterLoad()
+        //private System.Collections.IEnumerator RestoreAfterLoad()
+        //{
+        //    yield return null; // Wait for KSP field loading
+
+        //    var controller = GetKirController();
+        //    if (!string.IsNullOrEmpty(_kirPersistedConverterName) && controller != null)
+        //    {
+        //        KIR_DebugLogger.Log($"RestoreAfterLoad: Found persisted '{_kirPersistedConverterName}'");
+        //        RefreshFilteredLoadouts(controller);
+        //    }
+        //}
+        private System.Collections.IEnumerator EnsureCacheRebuildAfterConverters()
         {
-            yield return null; // Wait for KSP field loading
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame();
 
             var controller = GetKirController();
-            if (!string.IsNullOrEmpty(_kirPersistedConverterName) && controller != null)
+            if (controller?._cachedCoreHeat != null)
             {
-                KIR_DebugLogger.Log($"RestoreAfterLoad: Found persisted '{_kirPersistedConverterName}'");
-                RefreshFilteredLoadouts(controller);
+                var updateCacheMethod = typeof(ModuleCoreHeat).GetMethod("UpdateConverterModuleCache",
+                    BindingFlags.Public | BindingFlags.Instance);
+                updateCacheMethod?.Invoke(controller._cachedCoreHeat, null);
+
+                KIR_DebugLogger.Log("[KIR-HEAT] Final cache rebuild after converter init");
             }
         }
 
@@ -416,23 +462,22 @@ namespace KreeglandIndustrialRepurposing
 
         public void UpdateConverterUI()
         {
-            var converters = part.FindModulesImplementing<KIR_Converter>();
-            if (moduleIndex >= converters.Count || _isDisabled)
+            ProfileMethod(nameof(UpdateConverterUI), () =>
             {
-                Fields["converterStatus"].guiActive = false;
-                Fields["converterLoad"].guiActive = false;
-                Events["StartConverter"].active = false;
-                Events["StopConverter"].active = false;
-                return;
-            }
+                var converters = part.FindModulesImplementing<KIR_Converter>();
+                if (moduleIndex >= converters.Count || _isDisabled)
+                {
+                    Fields["converterStatus"].guiActive = false;
+                    Fields["converterLoad"].guiActive = false;
+                    Events["StartConverter"].active = false;
+                    Events["StopConverter"].active = false;
+                    return;
+                }
 
-            var converter = converters[moduleIndex];
-            string status = converter.GetCurrentStatus();
-
-            // Update curTemplate content but NOT guiName
-            curTemplate = status;
-
-            UpdateConverterButtons();
+                var converter = converters[moduleIndex];
+                curTemplate = converter.GetCurrentStatus();
+                UpdateConverterButtons();
+            });
         }
 
         private void UpdateConverterButtons()
@@ -892,6 +937,21 @@ namespace KreeglandIndustrialRepurposing
             }
             KIR_DebugLogger.Log(string.Format("{0} for loop failed, returning -1", KIR_Constants.DEBUG_EVA_PREFIX));
             return -1;
+        }
+        /// <summary>
+        /// Profiles method execution time in DEBUG builds only.
+        /// Logs if execution exceeds 1ms.
+        /// </summary>
+        [Conditional("DEBUG")]
+        private void ProfileMethod(string methodName, System.Action action)
+        {
+            var sw = Stopwatch.StartNew();
+            action();
+            sw.Stop();
+            if (sw.ElapsedMilliseconds > 1)
+            {
+                KIR_DebugLogger.Log($"[KIR-PERF] {methodName} took {sw.ElapsedMilliseconds}ms");
+            }
         }
     }
 }
