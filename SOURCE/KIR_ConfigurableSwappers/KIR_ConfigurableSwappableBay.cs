@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using TMPro;
 using UnityEngine;
 using USITools;
 using static KreeglandIndustrialRepurposing.KIR_ConfigurableSwapController;
@@ -12,9 +14,13 @@ namespace KreeglandIndustrialRepurposing
     public class KIR_ConfigurableSwappableBay : USI_SwappableBay
     {
         private List<AbstractSwapOption> _filteredLoadouts;
+        private float _lastEff = -1f; // For converter efficiency calcs
         private bool _isDisabled = false;
         private bool _bayInitialized = false;
         private bool _cacheInitialized = false;
+        private StringBuilder _convStatusSB = new StringBuilder(128);
+        private string _lastStatus = string.Empty;
+        private ModuleCoreHeat _cachedCoreHeat;
 
         /// <summary>
         /// Cached list of KIR_Converter modules to avoid repeated FindModulesImplementing calls
@@ -44,9 +50,7 @@ namespace KreeglandIndustrialRepurposing
                 fieldInfo = type.GetField(fieldName, flags);
                 _fieldInfoCache[cacheKey] = fieldInfo; // Cache even if null
 
-#if DEBUG
                 KIR_DebugLogger.Log($"[KIR-REFLECT] Cached FieldInfo for {cacheKey}");
-#endif
             }
 
             return fieldInfo;
@@ -390,6 +394,7 @@ namespace KreeglandIndustrialRepurposing
             _cacheInitialized = false;
             _cachedConverters = null;
             _cachedConverterCount = -1;
+            _cachedCoreHeat = part.FindModuleImplementing<ModuleCoreHeat>();
 
             // DECLARE postLoadField HERE - use cached reflection
             var postLoadField = GetCachedFieldInfo(typeof(USI_SwappableBay), "_postLoad",
@@ -490,24 +495,73 @@ namespace KreeglandIndustrialRepurposing
             base.OnDestroy();
         }
 
+
+
         public void UpdateConverterUI()
         {
-            ProfileMethod(nameof(UpdateConverterUI), () =>
-            {
-                var converters = GetCachedConverters(); // <-- Use cache instead of direct call
-                if (moduleIndex >= converters.Count || _isDisabled)
-                {
-                    Fields["converterStatus"].guiActive = false;
-                    Fields["converterLoad"].guiActive = false;
-                    Events["StartConverter"].active = false;
-                    Events["StopConverter"].active = false;
-                    return;
-                }
+            var converters = GetCachedConverters();
 
-                var converter = converters[moduleIndex];
-                curTemplate = converter.GetCurrentStatus();
-                UpdateConverterButtons();
-            });
+            // 1. Safety & Disable Check
+            if (moduleIndex >= converters.Count || _isDisabled)
+            {
+                Fields["converterStatus"].guiActive = false;
+                Fields["converterLoad"].guiActive = false;
+                Events["StartConverter"].active = false;
+                Events["StopConverter"].active = false;
+                return;
+            }
+
+            float currentEff = GetConverterEfficiency();
+            var converter = converters[moduleIndex];
+
+            // 2. Get the raw base status from the converter
+            string baseStatus = converter.GetCurrentStatus();
+
+            // 3. Logic: Only append efficiency if it is Active AND produces heat
+            if (baseStatus != _lastStatus || Mathf.Abs(currentEff - _lastEff) > 0.001f)
+            {
+                // Update trackers
+                _lastStatus = baseStatus;
+                _lastEff = currentEff;
+
+                if (baseStatus != "Inactive" && converter.GeneratesHeat)
+                {
+                    _convStatusSB.Clear();
+                    _convStatusSB.Append(baseStatus);
+                    _convStatusSB.Append(" Eff. ");
+                    _convStatusSB.Append(currentEff.ToString("P1"));
+                    curTemplate = _convStatusSB.ToString();
+                }
+                else
+                {
+                    // Otherwise, the template is just the base status (Inactive or Non-Thermal)
+                    curTemplate = baseStatus;
+                }
+            }
+
+            // 4. Only update the actual KSPField if the text changed
+            if (converterStatus != curTemplate)
+            {
+                converterStatus = curTemplate;
+            }
+
+            UpdateConverterButtons();
+        }
+
+        private float GetConverterEfficiency()
+        {
+            // 1. Use the cached module instead of searching every frame
+            if (_cachedCoreHeat == null) return 1f;
+
+            var converters = GetCachedConverters();
+            var converter = converters[moduleIndex];
+
+            // 2. Direct null/logic checks (Faster than try-catch)
+            if (converter?.ThermalEfficiency?.Curve == null) return 1f;
+            if (converter.ThermalEfficiency.Curve.keys.Length == 0) return 1f;
+
+            // 3. Evaluate the curve
+            return converter.ThermalEfficiency.Evaluate((float)_cachedCoreHeat.CoreTemperature);
         }
 
         private void UpdateConverterButtons()

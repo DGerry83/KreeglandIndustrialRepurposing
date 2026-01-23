@@ -70,9 +70,7 @@ namespace KreeglandIndustrialRepurposing
                 methodInfo = type.GetMethod(methodName, flags);
                 _methodInfoCache[cacheKey] = methodInfo;
 
-#if DEBUG
                 KIR_DebugLogger.Log($"[KIR-REFLECT] Cached MethodInfo for {cacheKey}");
-#endif
             }
 
             return methodInfo;
